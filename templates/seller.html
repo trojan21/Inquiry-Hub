@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Seller Dashboard — InquiryHub</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/frontend/style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🔷</div>
+      <div>
+        <div class="logo-text">InquiryHub</div>
+        <div class="logo-sub">Seller Portal</div>
+      </div>
+    </div>
+
+    <nav>
+      <span class="sidebar-section">Main</span>
+      <a class="active"><span class="nav-icon">📊</span> Dashboard</a>
+      <a onclick="loadInquiries()"><span class="nav-icon">🔍</span> Browse Inquiries</a>
+
+      <span class="sidebar-section">Account</span>
+      <a href="/"><span class="nav-icon">🏠</span> Home</a>
+    </nav>
+
+    <div class="sidebar-user" onclick="logout()">
+  <div class="avatar">S</div>
+
+  <div class="user-info">
+    <div class="u-name" id="username"></div>
+    <div class="u-role" id="userEmail">Seller </div>
+  </div>
+
+  <div class="u-out">⏻</div>
+</div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Seller Dashboard</h1>
+      </div>
+    </div>
+
+    <div class="page">
+
+      <!-- STATS -->
+      <div class="stats">
+
+        <div class="stat-card purple">
+          <h2 id="count-open">0</h2>
+          <p>Open Inquiries</p>
+        </div>
+
+        <div class="stat-card blue clickable" onclick="loadResponses()">
+          <h2 id="count-quotes">0</h2>
+          <p>Quotes Sent</p>
+        </div>
+
+        <div class="stat-card green">
+          <h2 id="count-cats">0</h2>
+          <p>Categories</p>
+        </div>
+
+      </div>
+
+      <!-- FILTER -->
+      <div class="filter-row">
+        <select id="cat-filter" onchange="applyFilter()"></select>
+
+        <select id="city-filter" onchange="applyFilter()">
+          <option value="">All Cities</option>
+        </select>
+
+        <button class="secondary-btn" onclick="loadInquiries()">Reset</button>
+      </div>
+
+      <!-- CONTENT -->
+      <div id="content" class="inquiry-list"></div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay hidden">
+  <div class="modal">
+
+    <div class="modal-header">
+      <h3>Send Quote</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <label>Message</label>
+    <textarea id="msg"></textarea>
+
+    <label>Price</label>
+    <input id="price" type="number">
+
+    <div class="modal-actions">
+      <button class="secondary-btn" onclick="closeModal()">Cancel</button>
+      <button onclick="submitQuote()">Send</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- SAME HEAD + CSS (unchanged) -->
+
+<script>
+
+const userId = localStorage.getItem("user_id")
+
+const username = localStorage.getItem("username") || "Seller";
+const email = localStorage.getItem("email") || "";
+
+// name
+document.getElementById("username").innerText = username;
+
+// email below (optional)
+document.getElementById("userEmail").innerText = email;
+
+// avatar
+document.querySelector(".avatar").innerText =
+  username.charAt(0).toUpperCase();
+let allInquiries = []
+let currentInquiry = null
+
+window.onload = () => {
+  loadCategories()
+  loadCities()      // ✅ ONLY from DB
+  loadInquiries()
+  loadStats()
+}
+
+/* ---------------- CATEGORIES ---------------- */
+async function loadCategories(){
+  const res = await fetch("/inquiries/meta")
+  const data = await res.json()
+
+  document.getElementById("cat-filter").innerHTML =
+    `<option value="">All Categories</option>` +
+    data.categories.map(c=>`<option>${c}</option>`).join("")
+}
+
+/* ---------------- CITIES (FIXED) ---------------- */
+async function loadCities() {
+  const res = await fetch('/inquiries/cities')
+  const cities = await res.json()
+
+  const dropdown = document.getElementById("city-filter")
+
+  dropdown.innerHTML = `<option value="">All Cities</option>` +
+    cities.map(c => `<option>${c}</option>`).join("")
+}
+
+/* ---------------- STATS ---------------- */
+async function loadStats(){
+  const res = await fetch(`/seller/stats/${userId}`)
+  const d = await res.json()
+
+  document.getElementById("count-quotes").innerText = d.quotes_sent
+}
+
+/* ---------------- INQUIRIES ---------------- */
+async function loadInquiries(){
+  const res = await fetch("/inquiries/all")
+  allInquiries = await res.json()
+
+  document.getElementById("count-open").innerText = allInquiries.length
+  document.getElementById("count-cats").innerText =
+    new Set(allInquiries.map(i=>i.category)).size
+
+  renderInquiries(allInquiries)
+}
+
+function renderInquiries(data){
+  const el = document.getElementById("content")
+
+  el.innerHTML = data.map(i=>`
+    <div class="inquiry-card" onclick="viewInquiry(${i.id})">
+
+      <div class="inquiry-card-left">
+        <div class="inq-title">${i.category}</div>
+
+        <div class="inq-footer">
+          <span class="budget"><b>₹${i.budget || "—"}</b></span>
+          <span>${i.city || ""}</span>
+        </div>
+      </div>
+
+      <div class="inquiry-card-right">
+        <button class="btn-sm" onclick="event.stopPropagation(); openModal(${i.id})">
+          Respond
+        </button>
+        <span class="quote-count">${i.response_count || 0} total quotes</span>
+      </div>
+
+    </div>
+  `).join("")
+}
+
+/* ---------------- VIEW ---------------- */
+function viewInquiry(id){
+  const i = allInquiries.find(x => x.id === id)
+  const el = document.getElementById("content")
+
+  el.innerHTML = `
+    <div class="panel">
+
+      <div class="panel-header">
+        <h2>${i.category}</h2>
+        <span class="tag category">${i.city || ""}</span>
+      </div>
+
+      <div class="inq-desc">
+        ${i.details || "No description provided"}
+      </div>
+
+      ${i.file_path ? `
+        <div style="margin-top:12px;">
+          <a href="/${i.file_path}" target="_blank" class="tag company">
+            📎 View Attachment
+          </a>
+        </div>
+      ` : ""}
+
+      <div class="divider"></div>
+
+      <div class="inq-footer">
+        <span><b>Budget:</b> ₹${i.budget || "—"}</span>
+        <span><b>Total Quotes:</b> ${i.response_count || 0}</span>
+      </div>
+
+      <div style="margin-top:15px;">
+        <button onclick="openModal(${i.id})">Respond</button>
+        <button class="secondary-btn" onclick="loadInquiries()">Back</button>
+      </div>
+
+    </div>
+  `
+}
+
+/* ---------------- FILTER (FIXED) ---------------- */
+function applyFilter(){
+  const cat = document.getElementById("cat-filter").value
+  const city = document.getElementById("city-filter").value
+
+  let data = [...allInquiries]
+
+  if(cat) data = data.filter(i=>i.category===cat)
+  if(city) data = data.filter(i=>i.city===city)
+
+  renderInquiries(data)
+}
+
+/* ---------------- RESPONSES ---------------- */
+async function loadResponses(){
+  const res = await fetch(`/quotes/seller/${userId}`)
+  const data = await res.json()
+
+  const el = document.getElementById("content")
+
+  if(!data.length){
+    el.innerHTML = `<div class="empty-state">No quotes yet</div>`
+    return
+  }
+
+  el.innerHTML = data.map(q=>`
+    <div class="inquiry-card">
+
+      <div class="inquiry-card-left">
+        <div class="inq-title">${q.category}</div>
+        <div class="inq-desc">${q.message}</div>
+
+        <div class="inq-footer">
+          <span><b>${q.company_name || ""}</b></span>
+          <span>${q.city || ""}</span>
+        </div>
+      </div>
+
+      <div class="inquiry-card-right">
+        <div class="tag category">₹${q.price}</div>
+      </div>
+
+    </div>
+  `).join("")
+}
+
+/* ---------------- MODAL ---------------- */
+function openModal(id){
+  currentInquiry = id
+  document.getElementById("modal").classList.remove("hidden")
+}
+
+function closeModal(){
+  document.getElementById("modal").classList.add("hidden")
+}
+
+async function submitQuote(){
+  const msg = document.getElementById("msg").value
+  const price = document.getElementById("price").value
+
+  await fetch(`/inquiries/${currentInquiry}/respond`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      message: msg,
+      price: price,
+      seller_id: userId
+    })
+  })
+
+  closeModal()
+  loadInquiries()
+  loadStats()
+}
+
+/* ---------------- LOGOUT ---------------- */
+function logout(){
+  localStorage.clear()
+  window.location.href = "/"
+}
+
+</script>
+
+</body>
+</html>

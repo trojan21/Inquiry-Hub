@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Marketplace</title>
+<link rel="stylesheet" href="/frontend/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body class="centered">
+
+<div class="center-box">
+    <h1>Marketplace</h1>
+    <p>Select your role</p>
+
+    <div class="role-buttons">
+        <button onclick="go('buyer')">Buyer</button>
+        <button onclick="go('seller')">Seller</button>
+        <button onclick="go('admin')">Admin</button>
+    </div>
+</div>
+
+<script>
+const role = localStorage.getItem("role");
+
+if (role) {
+    // 🔥 USER IS LOGGED IN → MODIFY UI
+    document.querySelector("p").innerText = "Welcome back 👋";
+
+    // Replace buttons with dashboard CTA
+    document.querySelector(".role-buttons").innerHTML = `
+        <button onclick="goDashboard()">Go to Dashboard</button>
+        <button onclick="logout()">Logout</button>
+    `;
+}
+
+function go(role){
+    window.location.href = `/login?role=${role}`;
+}
+
+function goDashboard(){
+    const role = localStorage.getItem("role");
+
+    if (role === "buyer") window.location.href = "/buyer";
+    else if (role === "seller") window.location.href = "/seller";
+    else if (role === "admin") window.location.href = "/admin";
+}
+
+function logout(){
+    localStorage.clear();
+    window.location.reload();
+}
+</script>
+
+</body>
+</html>

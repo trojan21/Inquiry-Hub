@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Inquiry Details — InquiryHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/frontend/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── SIDEBAR ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🔷</div>
+      <div>
+        <div class="logo-text">InquiryHub</div>
+        <div class="logo-sub">Details</div>
+      </div>
+    </div>
+    <nav>
+      <a onclick="history.back()"><span class="nav-icon">←</span> Back</a>
+      <a href="/seller" id="dash-link"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="/"><span class="nav-icon">🏠</span> Home</a>
+    </nav>
+    <div class="sidebar-user" onclick="logout()">
+      <div class="avatar" id="sidebar-avatar">U</div>
+      <div>
+        <div class="u-name" id="sidebar-name">User</div>
+        <div class="u-role" id="sidebar-role">—</div>
+      </div>
+      <span class="u-out">⏻</span>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Inquiry Details</h1>
+        <div class="sub">Full view of this requirement</div>
+      </div>
+      <div class="topbar-right">
+        <button class="secondary-btn btn-sm" onclick="history.back()">← Back</button>
+        <button id="respond-btn" onclick="openModal()" style="display:none;">💬 Respond</button>
+      </div>
+    </div>
+
+    <div class="page">
+      <div id="detail-wrap">
+        <div class="loader-wrap"><div class="loader"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESPOND MODAL -->
+<div id="modal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Send a Quote</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <label>Your Message</label>
+    <textarea id="modal-msg" rows="4" placeholder="Describe your offer, timelines, terms…"></textarea>
+
+    <label>Your Price (₹)</label>
+    <input type="number" id="modal-price" placeholder="e.g. 14500">
+
+    <div class="modal-actions">
+      <button class="secondary-btn" onclick="closeModal()">Cancel</button>
+      <button onclick="submitQuote()">Send Quote</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const role     = localStorage.getItem("role") || "seller";
+const username = localStorage.getItem("username") || "User";
+const token    = localStorage.getItem("token");
+
+document.getElementById("sidebar-avatar").innerText = username.charAt(0).toUpperCase();
+document.getElementById("sidebar-name").innerText   = username;
+document.getElementById("sidebar-role").innerText   = role.charAt(0).toUpperCase() + role.slice(1);
+
+if (role === "buyer") document.getElementById("dash-link").href = "/buyer";
+
+// get ID from URL: /inquiry/123  or  ?id=123
+const pathId  = location.pathname.split("/").pop();
+const paramId = new URLSearchParams(location.search).get("id");
+const inqId   = (pathId && !isNaN(pathId)) ? pathId : paramId;
+
+if (!inqId) {
+  document.getElementById("detail-wrap").innerHTML =
+    `<div class="empty-state">No inquiry ID found.</div>`;
+} else {
+  loadDetail();
+}
+
+async function loadDetail() {
+  try {
+    const res = await fetch(`/inquiries/${inqId}`);
+    if (!res.ok) throw new Error();
+    const i = await res.json();
+
+    const date = i.created_at
+      ? new Date(i.created_at).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" })
+      : "—";
+
+    document.getElementById("detail-wrap").innerHTML = `
+      <div class="panel">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <h2 style="font-size:20px;font-weight:700;margin-bottom:10px;letter-spacing:-0.5px;">${i.title || i.category}</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;">
+              <span class="tag category">${i.category}</span>
+              <span class="tag ${i.status === 'closed' ? 'closed' : 'open'}">${i.status || 'Open'}</span>
+              ${i.company_name ? `<span class="tag company">🏢 ${i.company_name}</span>` : ""}
+              <span class="tag date">📅 ${date}</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px;font-weight:700;color:#f87171;">
+              ₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}
+            </div>
+            <div style="font-size:12px;color:var(--text-3);">Budget</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid-2" style="margin-bottom:0;gap:20px;">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-3);margin-bottom:8px;">Details</div>
+            <p style="font-size:14px;color:var(--text-2);line-height:1.7;">${i.description || i.details || "—"}</p>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-3);margin-bottom:12px;">Info</div>
+            ${row("Company", i.company_name)}
+            ${row("Quantity", i.quantity)}
+            ${row("Budget",  i.budget ? "₹" + Number(i.budget).toLocaleString("en-IN") : null)}
+            ${row("Brand",   i.brand)}
+            ${row("Contact", i.mobile)}
+            ${row("Email",   i.email)}
+          </div>
+        </div>
+      </div>
+
+      ${renderResponses(i.responses)}
+    `;
+
+    if (role === "seller") {
+      document.getElementById("respond-btn").style.display = "inline-flex";
+    }
+  } catch {
+    document.getElementById("detail-wrap").innerHTML =
+      `<div class="empty-state">Could not load inquiry. Please go back and try again.</div>`;
+  }
+}
+
+function row(label, val) {
+  if (!val) return "";
+  return `<div style="display:flex;gap:8px;margin-bottom:8px;font-size:13px;">
+    <span style="color:var(--text-3);min-width:80px;">${label}</span>
+    <span style="color:var(--text-1);font-weight:500;">${val}</span>
+  </div>`;
+}
+
+function renderResponses(responses) {
+  if (!responses || !responses.length) {
+    return `<div class="panel">
+      <div class="panel-header"><h2>💬 Quotes (0)</h2></div>
+      <div class="empty-state">No quotes yet for this inquiry.</div>
+    </div>`;
+  }
+  return `<div class="panel">
+    <div class="panel-header"><h2>💬 Quotes (${responses.length})</h2></div>
+    <div class="inquiry-list">
+      ${responses.map(r => `
+        <div class="inquiry-card">
+          <div class="inquiry-card-left">
+            <div class="inq-title">₹${r.price ? Number(r.price).toLocaleString("en-IN") : "—"}</div>
+            <div class="inq-desc">${r.message || "No message"}</div>
+            <div class="inq-tags"><span class="tag date">
+              ${r.created_at ? new Date(r.created_at).toLocaleDateString("en-IN") : ""}
+            </span></div>
+          </div>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function openModal() {
+  document.getElementById("modal-msg").value   = "";
+  document.getElementById("modal-price").value = "";
+  document.getElementById("modal").classList.remove("hidden");
+}
+function closeModal() { document.getElementById("modal").classList.add("hidden"); }
+
+async function submitQuote() {
+  const msg   = document.getElementById("modal-msg").value.trim();
+  const price = document.getElementById("modal-price").value;
+  if (!msg) { showToast("Enter a message", "error"); return; }
+
+  const headers = { "Content-Type":"application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`/inquiries/${inqId}/respond`, {
+    method: "POST", headers,
+    body: JSON.stringify({ message: msg, price: price ? parseFloat(price) : null })
+  });
+
+  if (res.ok) {
+    closeModal();
+    showToast("Quote sent!", "success");
+    loadDetail();
+  } else {
+    showToast("Failed to send quote", "error");
+  }
+}
+
+function logout() { localStorage.clear(); window.location.href = "/"; }
+
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.innerText = msg; t.className = `show ${type}`;
+  setTimeout(() => { t.className = ""; }, 3200);
+}
+</script>
+</body>
+</html>

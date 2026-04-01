@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buyer Dashboard — InquiryHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/frontend/style.css">
+
+<style>
+/* ── Location Wrapper ────────────────────────────────────── */
+.loc-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  position: relative;
+}
+@media (max-width: 540px) {
+  .loc-wrapper { grid-template-columns: 1fr; }
+}
+.loc-field { position: relative; }
+
+.loc-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px;
+  color: #4e5f82;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+.loc-trigger:hover { border-color: rgba(123,47,255,0.4); background: rgba(123,47,255,0.05); }
+.loc-trigger.open {
+  border-color: rgba(123,47,255,0.6);
+  background: rgba(123,47,255,0.08);
+  box-shadow: 0 0 0 3px rgba(123,47,255,0.12);
+  color: #eef2ff;
+}
+.loc-trigger.selected { color: #eef2ff; border-color: rgba(123,47,255,0.35); }
+.loc-trigger.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.loc-trigger.invalid  { border-color: rgba(255,69,96,0.6) !important; box-shadow: 0 0 0 3px rgba(255,69,96,0.12) !important; }
+
+.loc-icon  { font-size: 16px; flex-shrink: 0; }
+.loc-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-arrow { font-size: 11px; color: #4e5f82; transition: transform 0.2s ease; flex-shrink: 0; }
+.loc-trigger.open .loc-arrow { transform: rotate(180deg); color: #7b2fff; }
+
+.loc-drop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: #0f1521;
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(123,47,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+  z-index: 400;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.loc-drop.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+.loc-search-wrap { padding: 10px 10px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.loc-search {
+  width: 100%;
+  padding: 9px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  color: #eef2ff;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.18s;
+  box-sizing: border-box;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+.loc-search:focus { border-color: rgba(123,47,255,0.55); background: rgba(123,47,255,0.07); box-shadow: 0 0 0 2px rgba(123,47,255,0.1) !important; }
+.loc-search::placeholder { color: #4e5f82; }
+
+.loc-list {
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px 0;
+  margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(123,47,255,0.5) transparent;
+}
+.loc-list::-webkit-scrollbar       { width: 3px; }
+.loc-list::-webkit-scrollbar-track { background: transparent; }
+.loc-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #7b2fff, #2f88ff); border-radius: 99px; }
+
+.loc-list li {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  color: #8b99c0;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.loc-list li:hover  { background: rgba(123,47,255,0.15); color: #eef2ff; }
+.loc-list li.active { background: rgba(123,47,255,0.2);  color: #d4bbff; font-weight: 600; }
+.loc-list li.active::after { content: '✓'; margin-left: auto; font-size: 11px; color: #7b2fff; }
+
+.loc-loading, .loc-placeholder, .loc-empty {
+  text-align: center !important;
+  color: #4e5f82 !important;
+  font-size: 12.5px !important;
+  padding: 20px 16px !important;
+  cursor: default !important;
+}
+.loc-loading { animation: loc-pulse 1.4s ease-in-out infinite; }
+@keyframes loc-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+.loc-loading::before { content: '⟳ '; display: inline-block; animation: loc-spin 1s linear infinite; }
+@keyframes loc-spin  { to { transform: rotate(360deg); } }
+
+/* Offline warning strip shown at top of dropdown when CDN failed */
+.loc-offline-badge {
+  display: none;
+  font-size: 11px;
+  color: #f59e0b;
+  padding: 6px 14px;
+  text-align: center;
+  background: rgba(245,158,11,0.07);
+  border-bottom: 1px solid rgba(245,158,11,0.18);
+  letter-spacing: 0.01em;
+}
+.loc-offline-badge.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── SIDEBAR ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🔷</div>
+      <div>
+        <div class="logo-text">InquiryHub</div>
+        <div class="logo-sub">Buyer Portal</div>
+      </div>
+    </div>
+
+    <nav>
+      <span class="sidebar-section">Main</span>
+      <a class="active"><span class="nav-icon">📊</span> Dashboard</a>
+      <a onclick="showSection('create')"><span class="nav-icon">➕</span> New Inquiry</a>
+      <a onclick="showSection('my')"><span class="nav-icon">📋</span> My Inquiries <span class="nav-dot"></span></a>
+      <a onclick="showSection('quotes')"><span class="nav-icon">💬</span> Received Quotes</a>
+
+      <span class="sidebar-section">Account</span>
+      <a href="/"><span class="nav-icon">🏠</span> Home</a>
+    </nav>
+
+    <div class="sidebar-user" onclick="logout()">
+      <div class="avatar" id="sidebar-avatar">B</div>
+      <div>
+        <div class="u-name" id="sidebar-name">Buyer</div>
+        <div class="u-role">Buyer Account</div>
+      </div>
+      <span class="u-out">⏻</span>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Buyer Dashboard</h1>
+        <div class="sub" id="topbar-date">—</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-chip">
+          <span class="chip-dot"></span>
+          <span id="topbar-name">Buyer</span>
+        </div>
+        <span class="role-pill buyer">Buyer</span>
+      </div>
+    </div>
+
+    <div class="page">
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat-card blue">
+          <div class="stat-icon">📋</div>
+          <h2 id="stat-total">0</h2>
+          <p>Total Inquiries</p>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">💬</div>
+          <h2 id="stat-quotes">0</h2>
+          <p>Quotes Received</p>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon">⏳</div>
+          <h2 id="stat-open">0</h2>
+          <p>Open Inquiries</p>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">✅</div>
+          <h2 id="stat-closed">0</h2>
+          <p>Closed</p>
+        </div>
+      </div>
+
+      <!-- CREATE INQUIRY -->
+      <div class="panel" id="section-create">
+        <div class="panel-header">
+          <h2>➕ Create New Inquiry</h2>
+        </div>
+        <form id="inq-form">
+          <div class="grid-2">
+            <div class="form-row"><input name="name"         placeholder="Your Name"     required></div>
+            <div class="form-row"><input name="mobile"       placeholder="Mobile"        required></div>
+            <div class="form-row"><input name="email"        placeholder="Email"         required></div>
+            <div class="form-row"><input name="category"     placeholder="Category"      required></div>
+            <div class="form-row"><input name="company_name" placeholder="Company Name"         ></div>
+            <div class="form-row"><input name="budget"       placeholder="Budget (₹)"           ></div>
+            <div class="form-row"><input name="brand"        placeholder="Preferred Brand"       ></div>
+
+            <!-- ── State + City Dropdown ── -->
+            <div class="form-row loc-wrapper" id="loc-wrapper">
+
+              <!-- STATE -->
+              <div class="loc-field" id="state-field">
+                <div class="loc-trigger" id="state-trigger" onclick="toggleDrop('state')">
+                  <span class="loc-icon">🗺️</span>
+                  <span class="loc-value" id="state-value">Select State</span>
+                  <span class="loc-arrow">▾</span>
+                </div>
+                <div class="loc-drop" id="state-drop">
+                  <div class="loc-offline-badge" id="state-offline-badge">⚡ Offline mode — major states only</div>
+                  <div class="loc-search-wrap">
+                    <input class="loc-search" id="state-search" placeholder="Search state…"
+                           oninput="filterList('state')" autocomplete="off">
+                  </div>
+                  <ul class="loc-list" id="state-list">
+                    <li class="loc-loading">Loading states…</li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- CITY -->
+              <div class="loc-field" id="city-field">
+                <div class="loc-trigger disabled" id="city-trigger" onclick="toggleDrop('city')">
+                  <span class="loc-icon">🏙️</span>
+                  <span class="loc-value" id="city-value">Select City</span>
+                  <span class="loc-arrow">▾</span>
+                </div>
+                <div class="loc-drop" id="city-drop">
+                  <div class="loc-offline-badge" id="city-offline-badge">⚡ Offline mode — major cities only</div>
+                  <div class="loc-search-wrap">
+                    <input class="loc-search" id="city-search" placeholder="Search city…"
+                           oninput="filterList('city')" autocomplete="off">
+                  </div>
+                  <ul class="loc-list" id="city-list">
+                    <li class="loc-placeholder">← Choose a state first</li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Hidden field submitted with form -->
+              <input type="hidden" name="city" id="city-hidden">
+            </div>
+            <!-- ── End Location Dropdown ── -->
+
+          </div>
+          <div class="form-row">
+            <textarea name="details" placeholder="Describe your requirement in detail…" required></textarea>
+          </div>
+          <div class="form-row">
+            <input type="file" name="file">
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button type="submit">Submit Inquiry</button>
+            <button type="reset" class="secondary-btn" onclick="resetLocation()">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MY INQUIRIES -->
+      <div class="panel" id="section-my">
+        <div class="panel-header">
+          <h2>📋 My Inquiries</h2>
+          <span class="panel-action" onclick="loadMy()">Refresh</span>
+        </div>
+        <div id="my-list" class="inquiry-list"></div>
+      </div>
+
+      <!-- QUOTES -->
+      <div class="panel" id="section-quotes">
+        <div class="panel-header">
+          <h2>💬 Received Quotes</h2>
+          <span class="panel-action" onclick="loadQuotes()">Refresh</span>
+        </div>
+        <div id="quote-list" class="inquiry-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ── Dashboard Logic ───────────────────────────────────── -->
+<script>
+if (localStorage.getItem("role") !== "buyer") {
+  localStorage.clear();
+  window.location.href = "/login?role=buyer";
+}
+
+const username = localStorage.getItem("username") || "Buyer";
+const buyerId  = localStorage.getItem("user_id");
+
+document.getElementById("topbar-name").innerText    = username;
+document.getElementById("sidebar-name").innerText   = username;
+document.getElementById("sidebar-avatar").innerText = username.charAt(0).toUpperCase();
+document.getElementById("topbar-date").innerText    =
+  new Date().toLocaleDateString("en-IN", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+
+window.addEventListener("DOMContentLoaded", () => { loadMy(); loadQuotes(); });
+
+async function loadMy() {
+  const el = document.getElementById("my-list");
+  el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
+  try {
+    const res  = await fetch(`/inquiries/my/${buyerId}`);
+    const data = res.ok ? await res.json() : [];
+    document.getElementById("stat-total").innerText  = data.length;
+    document.getElementById("stat-open").innerText   = data.filter(i => i.status !== "closed").length;
+    document.getElementById("stat-closed").innerText = data.filter(i => i.status === "closed").length;
+    if (!data.length) { el.innerHTML = `<div class="empty-state">No inquiries yet. Create your first one!</div>`; return; }
+    el.innerHTML = data.map(i => `
+      <div class="inquiry-card" onclick="viewDetail(${i.id})">
+        <div class="inquiry-card-left">
+          <div class="inq-title">${i.title || i.category}</div>
+          <div class="inq-tags">
+            <span class="tag category">${i.category}</span>
+            <span class="tag ${i.status === 'closed' ? 'closed' : 'open'}">${i.status || 'open'}</span>
+            ${i.company_name ? `<span class="tag company">🏢 ${i.company_name}</span>` : ""}
+          </div>
+          <div class="inq-desc">${(i.details || i.description || "").slice(0, 100)}…</div>
+          <div class="inq-footer">
+            <span class="budget">🔥 Budget: <b>₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}</b></span>
+          </div>
+        </div>
+        <div class="inquiry-card-right">
+          <button class="danger btn-sm" onclick="event.stopPropagation(); deleteInquiry(${i.id})">🗑 Delete</button>
+        </div>
+      </div>`).join("");
+  } catch { el.innerHTML = `<div class="empty-state">Error loading inquiries.</div>`; }
+}
+
+async function loadQuotes() {
+  const el = document.getElementById("quote-list");
+  el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
+  try {
+    const res  = await fetch(`/quotes/buyer/${buyerId}`);
+    const data = res.ok ? await res.json() : [];
+    document.getElementById("stat-quotes").innerText = data.length;
+    if (!data.length) { el.innerHTML = `<div class="empty-state">No quotes received yet.</div>`; return; }
+    el.innerHTML = data.map(q => `
+      <div class="inquiry-card">
+        <div class="inquiry-card-left">
+          <div class="inq-title">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</div>
+          <div class="inq-desc">${q.message || "No message"}</div>
+          <div class="inq-tags">
+            <span class="tag company">📧 ${q.seller_email || "Unknown"}</span>
+          </div>
+        </div>
+        <div class="inquiry-card-right">
+          <button class="danger btn-sm" onclick="rejectQuote(${q.id})">✕ Reject</button>
+        </div>
+      </div>`).join("");
+  } catch { el.innerHTML = `<div class="empty-state">Error loading quotes.</div>`; }
+}
+
+document.getElementById("inq-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  fd.append("buyer_id", buyerId);
+  const res = await fetch("/inquiries", { method: "POST", body: fd });
+  if (res.ok) {
+    showToast("Inquiry submitted!", "success");
+    e.target.reset();
+    resetLocation();
+    loadMy();
+    showSection("my");
+  } else {
+    showToast("Failed to submit. Try again.", "error");
+  }
+};
+
+async function deleteInquiry(id) {
+  if (!confirm("Delete this inquiry?")) return;
+  await fetch(`/inquiries/${id}?buyer_id=${buyerId}`, { method: "DELETE" });
+  showToast("Deleted", "info");
+  loadMy();
+}
+
+async function rejectQuote(id) {
+  await fetch(`/quotes/reject/${id}`, { method: "POST" });
+  showToast("Quote rejected", "info");
+  loadQuotes();
+}
+
+function showSection(sec) {
+  document.getElementById(`section-${sec}`)?.scrollIntoView({ behavior: "smooth" });
+}
+function logout()     { localStorage.clear(); window.location.href = "/login?role=buyer"; }
+function viewDetail(id) { window.location.href = `/inquiry/${id}`; }
+
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.innerText = msg; t.className = `show ${type}`;
+  setTimeout(() => { t.className = ""; }, 3200);
+}
+</script>
+
+
+<!-- ── Location Dropdown — CDN with offline fallback ─────── -->
+<script>
+(function () {
+
+  // ── FALLBACK DATA ──────────────────────────────────────
+  // Hardcoded major Indian states + cities.
+  // Used instantly if CDN is unreachable or times out.
+  const FALLBACK = {
+    states: [
+      { name:"Andaman and Nicobar",    isoCode:"AN" },
+      { name:"Andhra Pradesh",         isoCode:"AP" },
+      { name:"Arunachal Pradesh",      isoCode:"AR" },
+      { name:"Assam",                  isoCode:"AS" },
+      { name:"Bihar",                  isoCode:"BR" },
+      { name:"Chandigarh",             isoCode:"CH" },
+      { name:"Chhattisgarh",           isoCode:"CG" },
+      { name:"Dadra and Nagar Haveli", isoCode:"DN" },
+      { name:"Daman and Diu",          isoCode:"DD" },
+      { name:"Delhi",                  isoCode:"DL" },
+      { name:"Goa",                    isoCode:"GA" },
+      { name:"Gujarat",                isoCode:"GJ" },
+      { name:"Haryana",                isoCode:"HR" },
+      { name:"Himachal Pradesh",       isoCode:"HP" },
+      { name:"Jammu and Kashmir",      isoCode:"JK" },
+      { name:"Jharkhand",              isoCode:"JH" },
+      { name:"Karnataka",              isoCode:"KA" },
+      { name:"Kerala",                 isoCode:"KL" },
+      { name:"Ladakh",                 isoCode:"LA" },
+      { name:"Lakshadweep",            isoCode:"LD" },
+      { name:"Madhya Pradesh",         isoCode:"MP" },
+      { name:"Maharashtra",            isoCode:"MH" },
+      { name:"Manipur",                isoCode:"MN" },
+      { name:"Meghalaya",              isoCode:"ML" },
+      { name:"Mizoram",                isoCode:"MZ" },
+      { name:"Nagaland",               isoCode:"NL" },
+      { name:"Odisha",                 isoCode:"OR" },
+      { name:"Puducherry",             isoCode:"PY" },
+      { name:"Punjab",                 isoCode:"PB" },
+      { name:"Rajasthan",              isoCode:"RJ" },
+      { name:"Sikkim",                 isoCode:"SK" },
+      { name:"Tamil Nadu",             isoCode:"TN" },
+      { name:"Telangana",              isoCode:"TG" },
+      { name:"Tripura",                isoCode:"TR" },
+      { name:"Uttar Pradesh",          isoCode:"UP" },
+      { name:"Uttarakhand",            isoCode:"UT" },
+      { name:"West Bengal",            isoCode:"WB" },
+    ],
+    cities: {
+      AN: ["Port Blair","Diglipur","Mayabunder","Car Nicobar"],
+      AP: ["Visakhapatnam","Vijayawada","Guntur","Nellore","Kurnool","Kakinada","Tirupati","Rajahmundry","Kadapa","Anantapur","Vizianagaram","Eluru"],
+      AR: ["Itanagar","Naharlagun","Pasighat","Tawang","Ziro","Bomdila"],
+      AS: ["Guwahati","Silchar","Dibrugarh","Jorhat","Nagaon","Tinsukia","Tezpur","Bongaigaon","Dhubri","Goalpara","Lakhimpur","Karimganj"],
+      BR: ["Patna","Gaya","Bhagalpur","Muzaffarpur","Darbhanga","Purnia","Ara","Bihar Sharif","Begusarai","Katihar","Munger","Chapra","Hajipur","Samastipur"],
+      CH: ["Chandigarh"],
+      CG: ["Raipur","Bhilai","Bilaspur","Korba","Durg","Rajnandgaon","Jagdalpur","Ambikapur","Raigarh","Chirmiri","Dhamtari","Mahasamund"],
+      DN: ["Silvassa","Amli","Dadra"],
+      DD: ["Daman","Diu"],
+      DL: ["New Delhi","Dwarka","Rohini","Saket","Karol Bagh","Lajpat Nagar","Janakpuri","Pitampura","Shahdara","Vasant Kunj","Mayur Vihar","Preet Vihar"],
+      GA: ["Panaji","Margao","Vasco da Gama","Mapusa","Ponda","Bicholim","Valpoi","Sanquelim","Canacona","Pernem"],
+      GJ: ["Ahmedabad","Surat","Vadodara","Rajkot","Bhavnagar","Jamnagar","Junagadh","Gandhinagar","Anand","Mehsana","Morbi","Nadiad","Bharuch","Navsari","Amreli","Botad"],
+      HR: ["Gurugram","Faridabad","Panipat","Ambala","Yamunanagar","Rohtak","Hisar","Karnal","Sonipat","Panchkula","Rewari","Bhiwani","Sirsa","Bahadurgarh"],
+      HP: ["Shimla","Dharamshala","Solan","Mandi","Kullu","Hamirpur","Bilaspur","Chamba","Una","Nahan","Palampur","Baddi"],
+      JK: ["Srinagar","Jammu","Anantnag","Sopore","Baramulla","Kathua","Udhampur","Punch","Rajouri","Leh"],
+      JH: ["Ranchi","Jamshedpur","Dhanbad","Bokaro","Deoghar","Hazaribagh","Giridih","Ramgarh","Medininagar","Chaibasa","Dumka","Phusro"],
+      KA: ["Bengaluru","Mysuru","Hubli","Mangaluru","Belagavi","Kalaburagi","Davanagere","Ballari","Vijayapura","Shivamogga","Tumakuru","Bidar","Udupi","Mandya","Hassan","Raichur"],
+      KL: ["Thiruvananthapuram","Kochi","Kozhikode","Thrissur","Kollam","Palakkad","Alappuzha","Malappuram","Kannur","Kottayam","Pathanamthitta","Idukki","Kasaragod","Wayanad"],
+      LA: ["Leh","Kargil"],
+      LD: ["Kavaratti","Agatti","Minicoy"],
+      MP: ["Bhopal","Indore","Jabalpur","Gwalior","Ujjain","Sagar","Dewas","Satna","Ratlam","Rewa","Murwara","Singrauli","Chhindwara","Burhanpur","Khandwa"],
+      MH: ["Mumbai","Pune","Nagpur","Thane","Nashik","Aurangabad","Solapur","Kolhapur","Amravati","Nanded","Sangli","Jalgaon","Akola","Latur","Dhule","Ahmednagar","Chandrapur","Parbhani"],
+      MN: ["Imphal","Thoubal","Kakching","Senapati","Churachandpur","Bishnupur"],
+      ML: ["Shillong","Tura","Jowai","Nongstoin","Williamnagar"],
+      MZ: ["Aizawl","Lunglei","Saiha","Champhai","Kolasib"],
+      NL: ["Kohima","Dimapur","Mokokchung","Tuensang","Wokha","Zunheboto"],
+      OR: ["Bhubaneswar","Cuttack","Rourkela","Brahmapur","Sambalpur","Puri","Balasore","Bhadrak","Baripada","Jharsuguda","Angul","Dhenkanal","Koraput","Kendujhar"],
+      PY: ["Puducherry","Karaikal","Mahe","Yanam"],
+      PB: ["Ludhiana","Amritsar","Jalandhar","Patiala","Bathinda","Mohali","Firozpur","Hoshiarpur","Gurdaspur","Moga","Pathankot","Sangrur","Barnala","Fatehgarh Sahib"],
+      RJ: ["Jaipur","Jodhpur","Kota","Bikaner","Ajmer","Udaipur","Bhilwara","Alwar","Bharatpur","Sikar","Pali","Sri Ganganagar","Barmer","Churu","Jhunjhunu","Nagaur","Tonk"],
+      SK: ["Gangtok","Namchi","Gyalshing","Mangan","Rangpo"],
+      TN: ["Chennai","Coimbatore","Madurai","Tiruchirappalli","Salem","Tirunelveli","Tiruppur","Erode","Vellore","Thoothukudi","Dindigul","Thanjavur","Kanchipuram","Nagercoil","Kumbakonam","Hosur"],
+      TG: ["Hyderabad","Warangal","Nizamabad","Karimnagar","Khammam","Ramagundam","Secunderabad","Mahbubnagar","Nalgonda","Adilabad","Suryapet","Siddipet"],
+      TR: ["Agartala","Dharmanagar","Udaipur","Kailasahar","Belonia","Ambassa"],
+      UP: ["Lucknow","Kanpur","Agra","Varanasi","Meerut","Allahabad (Prayagraj)","Ghaziabad","Noida","Bareilly","Aligarh","Moradabad","Saharanpur","Gorakhpur","Firozabad","Mathura","Muzaffarnagar","Shahjahanpur","Jhansi","Rampur","Hapur"],
+      UT: ["Dehradun","Haridwar","Roorkee","Haldwani","Rudrapur","Kashipur","Rishikesh","Pithoragarh","Almora","Mussoorie","Kotdwar","Ramnagar"],
+      WB: ["Kolkata","Asansol","Siliguri","Durgapur","Bardhaman","Malda","Baharampur","Habra","Kharagpur","Shantipur","Jalpaiguri","Haldia","Darjeeling","Cooch Behar","Krishnanagar","Raiganj"],
+    }
+  };
+
+  // ── Internal state ──────────────────────────────────────
+  const loc = {
+    states:         [],
+    cities:         [],
+    selectedState:  null,
+    selectedCity:   null,
+    openDrop:       null,
+    _citiesByState: {},
+    usingFallback:  false,
+  };
+
+  const CDN_BASE    = 'https://cdn.jsdelivr.net/npm/country-state-city@3.2.1/dist/lib';
+  const CDN_TIMEOUT = 5000; // ms — treat as offline after this
+
+  // ── Fetch with hard timeout ─────────────────────────────
+  function fetchWithTimeout(url, ms) {
+    return new Promise((resolve, reject) => {
+      const id = setTimeout(() => reject(new Error('timeout')), ms);
+      fetch(url)
+        .then(r => { clearTimeout(id); resolve(r); })
+        .catch(e => { clearTimeout(id); reject(e); });
+    });
+  }
+
+  // ── Boot ────────────────────────────────────────────────
+  async function init() {
+    // Show loading immediately so dropdown feels responsive
+    document.getElementById('state-list').innerHTML =
+      '<li class="loc-loading">Loading states…</li>';
+
+    try {
+      const [statesRes, citiesRes] = await Promise.all([
+        fetchWithTimeout(`${CDN_BASE}/state.json`, CDN_TIMEOUT),
+        fetchWithTimeout(`${CDN_BASE}/city.json`,  CDN_TIMEOUT),
+      ]);
+
+      const allStates = await statesRes.json();
+      const allCities = await citiesRes.json();
+
+      loc.states = allStates
+        .filter(s => s.countryCode === 'IN')
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      allCities.forEach(c => {
+        const name        = Array.isArray(c) ? c[0] : c.name;
+        const stateCode   = Array.isArray(c) ? c[1] : c.stateCode;
+        const countryCode = Array.isArray(c) ? c[2] : c.countryCode;
+        if (countryCode !== 'IN') return;
+        if (!loc._citiesByState[stateCode]) loc._citiesByState[stateCode] = [];
+        loc._citiesByState[stateCode].push(name);
+      });
+
+      loc.usingFallback = false;
+
+    } catch (err) {
+      // CDN failed or timed out — use built-in fallback silently
+      console.warn('[Location] CDN unavailable, offline fallback active.', err.message);
+      loc.states         = FALLBACK.states; // already sorted above
+      loc._citiesByState = FALLBACK.cities;
+      loc.usingFallback  = true;
+      document.getElementById('state-offline-badge').classList.add('visible');
+    }
+
+    renderStateList();
+  }
+
+  // ── Render ──────────────────────────────────────────────
+  function renderStateList() {
+    const list = document.getElementById('state-list');
+    list.innerHTML = loc.states.length
+      ? loc.states.map(s => stateItem(s)).join('')
+      : '<li class="loc-empty">No states found</li>';
+  }
+
+  function esc(s) { return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+
+  function stateItem(s) {
+    const active = loc.selectedState?.isoCode === s.isoCode ? ' class="active"' : '';
+    return `<li${active} onclick="window._locPickState('${esc(s.isoCode)}','${esc(s.name)}')">${s.name}</li>`;
+  }
+
+  function cityItem(name) {
+    const active = loc.selectedCity === name ? ' class="active"' : '';
+    return `<li${active} onclick="window._locPickCity('${esc(name)}')">${name}</li>`;
+  }
+
+  // ── Pick state ──────────────────────────────────────────
+  window._locPickState = function (isoCode, name) {
+    loc.selectedState = { isoCode, name };
+    loc.selectedCity  = null;
+
+    document.getElementById('state-value').textContent = name;
+    const st = document.getElementById('state-trigger');
+    st.classList.add('selected');
+    st.classList.remove('invalid');
+
+    const cities = (loc._citiesByState[isoCode] || []).slice().sort();
+    loc.cities = cities;
+
+    // Show/hide offline badge on city drop
+    document.getElementById('city-offline-badge')
+      .classList.toggle('visible', loc.usingFallback);
+
+    // Reset & populate city list
+    document.getElementById('city-search').value = '';
+    document.getElementById('city-list').innerHTML = cities.length
+      ? cities.map(c => cityItem(c)).join('')
+      : '<li class="loc-empty">No cities found for this state</li>';
+
+    document.getElementById('city-value').textContent = 'Select City';
+    document.getElementById('city-hidden').value = '';
+
+    const ct = document.getElementById('city-trigger');
+    ct.classList.remove('selected', 'disabled', 'invalid');
+
+    // Refresh state checkmarks
+    document.querySelectorAll('#state-list li').forEach(li => {
+      li.classList.toggle('active', li.textContent.trim() === name);
+    });
+
+    _closeDrop('state');
+    setTimeout(() => _openDrop('city'), 180);
+  };
+
+  // ── Pick city ───────────────────────────────────────────
+  window._locPickCity = function (name) {
+    loc.selectedCity = name;
+    document.getElementById('city-value').textContent = name;
+    document.getElementById('city-hidden').value = name;
+
+    const ct = document.getElementById('city-trigger');
+    ct.classList.add('selected');
+    ct.classList.remove('invalid');
+
+    document.querySelectorAll('#city-list li').forEach(li => {
+      li.classList.toggle('active', li.textContent.trim() === name);
+    });
+
+    _closeDrop('city');
+  };
+
+  // ── Toggle / open / close ───────────────────────────────
+  window.toggleDrop = function (which) {
+    if (loc.openDrop === which) { _closeDrop(which); return; }
+    if (loc.openDrop) _closeDrop(loc.openDrop);
+    _openDrop(which);
+  };
+
+  function _openDrop(which) {
+    loc.openDrop = which;
+    document.getElementById(`${which}-drop`).classList.add('open');
+    document.getElementById(`${which}-trigger`).classList.add('open');
+    setTimeout(() => { document.getElementById(`${which}-search`)?.focus(); }, 50);
+  }
+
+  function _closeDrop(which) {
+    if (loc.openDrop === which) loc.openDrop = null;
+    document.getElementById(`${which}-drop`).classList.remove('open');
+    document.getElementById(`${which}-trigger`).classList.remove('open');
+    const s = document.getElementById(`${which}-search`);
+    if (s && s.value) { s.value = ''; filterList(which); }
+  }
+
+  // ── Filter ──────────────────────────────────────────────
+  window.filterList = function (which) {
+    const q = document.getElementById(`${which}-search`).value.toLowerCase().trim();
+    if (which === 'state') {
+      const filtered = q ? loc.states.filter(s => s.name.toLowerCase().includes(q)) : loc.states;
+      document.getElementById('state-list').innerHTML = filtered.length
+        ? filtered.map(s => stateItem(s)).join('')
+        : '<li class="loc-empty">No match</li>';
+    } else {
+      const filtered = q ? loc.cities.filter(c => c.toLowerCase().includes(q)) : loc.cities;
+      document.getElementById('city-list').innerHTML = filtered.length
+        ? filtered.map(c => cityItem(c)).join('')
+        : '<li class="loc-empty">No match</li>';
+    }
+  };
+
+  // ── Reset on form Clear ─────────────────────────────────
+  window.resetLocation = function () {
+    loc.selectedState = null;
+    loc.selectedCity  = null;
+    if (loc.openDrop) _closeDrop(loc.openDrop);
+
+    document.getElementById('state-value').textContent = 'Select State';
+    document.getElementById('city-value').textContent  = 'Select City';
+    document.getElementById('city-hidden').value = '';
+
+    const st = document.getElementById('state-trigger');
+    const ct = document.getElementById('city-trigger');
+    st.classList.remove('selected', 'open', 'invalid');
+    ct.classList.remove('selected', 'open', 'invalid');
+    ct.classList.add('disabled');
+
+    renderStateList();
+    document.getElementById('city-list').innerHTML =
+      '<li class="loc-placeholder">← Choose a state first</li>';
+  };
+
+  // ── Global events ───────────────────────────────────────
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#loc-wrapper') && loc.openDrop) _closeDrop(loc.openDrop);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && loc.openDrop) _closeDrop(loc.openDrop);
+  });
+
+  // Form validation — capture phase so it fires before submit handler
+  const form = document.getElementById('inq-form');
+  if (form) {
+    form.addEventListener('submit', e => {
+      if (!document.getElementById('city-hidden').value) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        document.getElementById('state-trigger').classList.add('invalid');
+        document.getElementById('city-trigger').classList.add('invalid');
+        if (typeof showToast === 'function') showToast('Please select your state and city', 'error');
+        document.getElementById('loc-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, true);
+  }
+
+  init();
+
+})();
+</script>
+
+</body>
+</html>

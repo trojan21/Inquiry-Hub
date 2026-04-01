@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel — InquiryHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/frontend/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── SIDEBAR ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🔷</div>
+      <div>
+        <div class="logo-text">InquiryHub</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+    </div>
+
+    <nav>
+      <span class="sidebar-section">Management</span>
+      <a class="active"><span class="nav-icon">📊</span> Overview</a>
+      <a onclick="focusSection('pending')"><span class="nav-icon">⏳</span> Pending Sellers <span class="nav-dot"></span></a>
+      <a onclick="focusSection('users')"><span class="nav-icon">👥</span> All Users</a>
+      <a onclick="focusSection('inquiries')"><span class="nav-icon">📋</span> Inquiries</a>
+
+      <span class="sidebar-section">Account</span>
+      <a href="/"><span class="nav-icon">🏠</span> Home</a>
+    </nav>
+
+    <div class="sidebar-user" onclick="logout()">
+      <div class="avatar" style="background:linear-gradient(135deg,#ef4444,#f97316);">A</div>
+      <div>
+        <div class="u-name">Admin</div>
+        <div class="u-role">Administrator</div>
+      </div>
+      <span class="u-out">⏻</span>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Admin Dashboard</h1>
+        <div class="sub" id="topbar-date">—</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-chip">
+          <span class="chip-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444;"></span>
+          <span>Admin</span>
+        </div>
+        <span class="role-pill admin">Admin</span>
+      </div>
+    </div>
+
+    <div class="page">
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat-card purple">
+          <div class="stat-icon">👥</div>
+          <h2 id="stat-users">0</h2>
+          <p>Total Users</p>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon">⏳</div>
+          <h2 id="stat-pending">0</h2>
+          <p>Pending Sellers</p>
+          <span class="stat-badge">Action Needed</span>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">📋</div>
+          <h2 id="stat-inquiries">0</h2>
+          <p>Total Inquiries</p>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">✅</div>
+          <h2 id="stat-approved">0</h2>
+          <p>Approved Sellers</p>
+        </div>
+      </div>
+
+      <!-- PENDING SELLERS -->
+      <div class="panel" id="section-pending">
+        <div class="panel-header">
+          <h2>⏳ Pending Seller Approvals</h2>
+          <span class="panel-action" onclick="loadPending()">Refresh</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Email</th><th>Status</th><th>Registered</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="pending-tbody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:30px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ALL USERS -->
+      <div class="panel" id="section-users">
+        <div class="panel-header">
+          <h2>👥 All Users</h2>
+          <span class="panel-action" onclick="loadUsers()">Refresh</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Email</th><th>Role</th><th>Company</th><th>Joined</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:30px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ALL INQUIRIES -->
+      <div class="panel" id="section-inquiries">
+        <div class="panel-header">
+          <h2>📋 All Inquiries</h2>
+          <span class="panel-action" onclick="loadInquiries()">Refresh</span>
+        </div>
+        <div id="inq-list" class="inquiry-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── GUARD ───────────────────────────────────────────────
+if (localStorage.getItem("role") !== "admin") {
+  localStorage.clear();window.location.href = "/login?role=admin"
+}
+
+document.getElementById("topbar-date").innerText =
+  new Date().toLocaleDateString("en-IN", { weekday:"long", day:"numeric", month:"long", year:"numeric" }) +
+  " · Control Panel";
+
+// ── BOOT ────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  loadPending(); loadUsers(); loadInquiries();
+});
+
+// ── PENDING SELLERS ─────────────────────────────────────
+async function loadPending() {
+  try {
+    const res  = await fetch("/admin/sellers/");
+    const data = res.ok ? await res.json() : [];
+    document.getElementById("stat-pending").innerText = data.length;
+
+    const tb = document.getElementById("pending-tbody");
+    if (!data.length) {
+      tb.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-3);padding:30px;">No pending sellers 🎉</td></tr>`;
+      return;
+    }
+    tb.innerHTML = data.map(u => `
+      <tr>
+        <td><strong>${u.email}</strong></td>
+        <td><span class="tag pending">Pending</span></td>
+        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString("en-IN") : "—"}</td>
+        <td class="table-actions">
+          <button class="btn-sm" onclick="approve(${u.id})">✓ Approve</button>
+          <button class="danger btn-sm" onclick="reject(${u.id})">✕ Reject</button>
+        </td>
+      </tr>`).join("");
+  } catch { console.error("loadPending failed"); }
+}
+
+// ── ALL USERS ───────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const res  = await fetch("/admin/sellers/all");
+    const data = res.ok ? await res.json() : [];
+    document.getElementById("stat-users").innerText    = data.length;
+    document.getElementById("stat-approved").innerText = data.filter(u => u.role === "seller").length;
+
+    const tb = document.getElementById("users-tbody");
+    if (!data.length) {
+      tb.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-3);padding:30px;">No users found</td></tr>`;
+      return;
+    }
+    tb.innerHTML = data.map(u => `
+      <tr>
+        <td><strong>${u.email}</strong></td>
+        <td><span class="tag ${u.role === 'admin' ? 'closed' : u.role === 'seller' ? 'category' : 'company'}">${u.role}</span></td>
+        <td>${u.company_name || "—"}</td>
+        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString("en-IN") : "—"}</td>
+        <td class="table-actions">
+          <button class="danger btn-sm" onclick="deleteUser(${u.id})">🗑 Delete</button>
+        </td>
+      </tr>`).join("");
+  } catch { console.error("loadUsers failed"); }
+}
+
+// ── INQUIRIES ───────────────────────────────────────────
+async function loadInquiries() {
+  const el = document.getElementById("inq-list");
+  el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
+  try {
+    const res  = await fetch("/inquiries/all");
+    const data = res.ok ? await res.json() : [];
+    document.getElementById("stat-inquiries").innerText = data.length;
+
+    if (!data.length) { el.innerHTML = `<div class="empty-state">No inquiries yet.</div>`; return; }
+
+    el.innerHTML = data.map(i => `
+      <div class="inquiry-card">
+        <div class="inquiry-card-left">
+          <div class="inq-title">${i.title || i.category}</div>
+          <div class="inq-tags">
+            <span class="tag category">${i.category}</span>
+            <span class="tag ${i.status === 'closed' ? 'closed' : 'open'}">${i.status || 'open'}</span>
+            ${i.company_name ? `<span class="tag company">🏢 ${i.company_name}</span>` : ""}
+          </div>
+          <div class="inq-desc">${(i.description || i.details || "").slice(0, 120)}…</div>
+        </div>
+        <div class="inquiry-card-right">
+          <span class="tag date">₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}</span>
+        </div>
+      </div>`).join("");
+  } catch { el.innerHTML = `<div class="empty-state">Error loading inquiries.</div>`; }
+}
+
+// ── ACTIONS ─────────────────────────────────────────────
+async function approve(id) {
+  await fetch(`/admin/sellers/approve/${id}`, { method: "POST" });
+  showToast("Seller approved ✓", "success");
+  loadPending(); loadUsers();
+}
+
+async function reject(id) {
+  await fetch(`/admin/sellers/reject/${id}`, { method: "POST" });
+  showToast("Seller rejected", "info");
+  loadPending();
+}
+
+async function deleteUser(id) {
+  if (!confirm("Permanently delete this user?")) return;
+  await fetch(`/admin/sellers/delete/${id}`, { method: "DELETE" });
+  showToast("User deleted", "error");
+  loadUsers();
+}
+
+function focusSection(id) {
+  document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function logout() { localStorage.clear(); window.location.href = "/"; }
+
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.innerText = msg; t.className = `show ${type}`;
+  setTimeout(() => { t.className = ""; }, 3200);
+}
+</script>
+</body>
+</html>

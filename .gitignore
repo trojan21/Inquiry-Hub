@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment variables (VERY IMPORTANT)
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Uploads / user files
+uploads/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Pytest / coverage (optional)
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build / dist (just in case)
+build/
+dist/
+*.egg-info/
