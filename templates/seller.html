@@ -2,17 +2,540 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Seller Dashboard — InquiryHub</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/frontend/style.css">
-</head>
 
+<style>
+/* ── SELLER-SPECIFIC STYLES ─────────────────────────── */
+
+/* Stats slim row */
+.stats-slim {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.stat-slim {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.2s, transform 0.18s;
+  cursor: default;
+}
+.stat-slim.clickable { cursor: pointer; }
+.stat-slim.clickable:hover { border-color: rgba(123,47,255,0.35); transform: translateY(-2px); }
+.stat-slim-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  color: #8b99c0;
+}
+.si-blue   { background: rgba(47,136,255,0.12); }
+.si-green  { background: rgba(0,229,122,0.1); }
+.si-amber  { background: rgba(255,184,0,0.1); }
+.si-purple { background: rgba(123,47,255,0.12); }
+.si-red    { background: rgba(248,113,113,0.1); }
+.stat-slim-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #eef2ff; line-height: 1; }
+.stat-slim-lbl { font-size: 11px; color: #4e5f82; margin-top: 2px; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex; gap: 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 11px; padding: 4px;
+  margin-bottom: 16px;
+}
+.tab-btn {
+  flex: 1; padding: 9px 10px;
+  background: transparent; border: none;
+  border-radius: 8px; color: #4e5f82;
+  font-size: 13px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center;
+  justify-content: center; gap: 6px;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: #8b99c0; background: rgba(255,255,255,0.04); }
+.tab-btn.active { background: rgba(123,47,255,0.15); color: #c4b5fd; }
+.tab-badge {
+  background: rgba(123,47,255,0.25); color: #a78bfa;
+  border-radius: 99px; padding: 1px 7px;
+  font-size: 10.5px; font-weight: 700;
+  min-width: 18px; text-align: center;
+}
+.tab-badge.red { background: rgba(248,113,113,0.2); color: #f87171; }
+
+/* Search + filter bar */
+.toolbar {
+  display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+}
+.search-wrap {
+  flex: 1; position: relative;
+}
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; pointer-events: none; color: #4e5f82;
+}
+.search-input {
+  width: 100%; padding: 10px 14px 10px 38px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; color: #eef2ff;
+  font-size: 13.5px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: all 0.2s; box-sizing: border-box;
+}
+.search-input:focus {
+  border-color: rgba(123,47,255,0.5);
+  background: rgba(123,47,255,0.05);
+  box-shadow: 0 0 0 3px rgba(123,47,255,0.1);
+}
+.search-input::placeholder { color: #2e3d5a; }
+.filter-sel {
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; color: #8b99c0;
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  outline: none; cursor: pointer; transition: all 0.2s;
+}
+.filter-sel:focus { border-color: rgba(123,47,255,0.4); }
+.filter-sel option { background: #0e1219; }
+.reset-btn {
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 10px; color: #4e5f82;
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.reset-btn:hover { color: #8b99c0; background: rgba(255,255,255,0.07); }
+
+/* Inquiry cards */
+.inq-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 20px;
+  margin-bottom: 10px; transition: all 0.2s;
+  cursor: pointer;
+}
+.inq-card:hover { border-color: rgba(123,47,255,0.3); background: rgba(123,47,255,0.03); }
+.inq-card.expanded { border-color: rgba(123,47,255,0.4); background: rgba(123,47,255,0.05); cursor: default; }
+.inq-card.responded-card { border-color: rgba(0,229,122,0.15); }
+.inq-card.rejected-card  { border-color: rgba(248,113,113,0.15); opacity: 0.8; }
+
+.inq-header { display: flex; align-items: center; gap: 12px; }
+.inq-cat-icon {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: rgba(123,47,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+}
+.inq-info { flex: 1; min-width: 0; }
+.inq-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.inq-cat { font-size: 14px; font-weight: 600; color: #eef2ff; }
+.inq-pill {
+  font-size: 10.5px; font-weight: 600; padding: 2px 8px;
+  border-radius: 99px; white-space: nowrap;
+}
+.pill-responded { background: rgba(0,229,122,0.12); color: #a3e6c8; border: 1px solid rgba(0,229,122,0.2); }
+.pill-rejected  { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+.pill-open      { background: rgba(255,184,0,0.1);   color: #ffb800;  border: 1px solid rgba(255,184,0,0.2); }
+.inq-sub { font-size: 12px; color: #4e5f82; margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap; }
+.inq-sub span { display: flex; align-items: center; gap: 3px; }
+
+.inq-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.inq-budget { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: #a3e6c8; }
+.days-pill {
+  font-size: 10.5px; font-weight: 600; padding: 2px 8px;
+  border-radius: 99px; white-space: nowrap;
+}
+.days-green { background: rgba(0,229,122,0.1);  color: #a3e6c8; }
+.days-amber { background: rgba(255,184,0,0.1);  color: #ffb800; }
+.days-red   { background: rgba(248,113,113,0.1);color: #f87171; }
+.quote-count-lbl { font-size: 11px; color: #4e5f82; }
+
+/* Expand drawer */
+.inq-drawer {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  animation: slideDown 0.2s ease;
+}
+@keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+.drawer-desc {
+  font-size: 13.5px; color: #8b99c0; line-height: 1.65;
+  margin-bottom: 14px;
+}
+.drawer-meta {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.drawer-meta-item { font-size: 12.5px; }
+.drawer-meta-item .lbl { color: #4e5f82; }
+.drawer-meta-item .val { color: #eef2ff; font-weight: 500; margin-left: 4px; }
+
+.drawer-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn-respond {
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #7b2fff, #2f88ff);
+  border: none; border-radius: 9px;
+  color: #fff; font-size: 13.5px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(123,47,255,0.3);
+}
+.btn-respond:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(123,47,255,0.4); }
+.btn-attach {
+  padding: 9px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 9px; color: #8b99c0;
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-attach:hover { background: rgba(255,255,255,0.08); color: #eef2ff; }
+.btn-collapse {
+  margin-left: auto;
+  padding: 9px 14px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 9px; color: #4e5f82;
+  font-size: 12px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-collapse:hover { color: #8b99c0; border-color: rgba(255,255,255,0.15); }
+
+/* My quote shown in responded drawer */
+.my-quote-box {
+  background: rgba(0,229,122,0.05);
+  border: 1px solid rgba(0,229,122,0.15);
+  border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.my-quote-box .mq-label { font-size: 11px; font-weight: 600; color: #a3e6c8; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.my-quote-box .mq-price { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: #eef2ff; margin-bottom: 4px; }
+.my-quote-box .mq-msg   { font-size: 13px; color: #8b99c0; line-height: 1.5; }
+
+/* Rejected quote box */
+.rejected-box {
+  background: rgba(248,113,113,0.05);
+  border: 1px solid rgba(248,113,113,0.15);
+  border-radius: 10px; padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.rejected-box .rj-label { font-size: 11px; font-weight: 600; color: #f87171; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+.rejected-box .rj-msg   { font-size: 13px; color: #8b99c0; }
+
+/* Empty state */
+.empty-box {
+  text-align: center; padding: 48px 24px; color: #4e5f82;
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-box h3 { font-size: 15px; color: #8b99c0; margin-bottom: 6px; }
+.empty-box p  { font-size: 13px; }
+
+/* Modal enhanced */
+.modal-field { margin-bottom: 14px; }
+.modal-field label {
+  display: block; margin-bottom: 5px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px; color: #4e5f82;
+}
+.modal-field .req { color: #f87171; margin-left: 3px; }
+.modal-input {
+  width: 100%; padding: 11px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; color: #eef2ff;
+  font-size: 13.5px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: all 0.2s; box-sizing: border-box;
+  resize: vertical;
+}
+.modal-input:focus { border-color: rgba(123,47,255,0.5); background: rgba(123,47,255,0.05); box-shadow: 0 0 0 3px rgba(123,47,255,0.1); }
+.modal-input::placeholder { color: #2e3d5a; }
+.modal-input.error { border-color: rgba(248,113,113,0.6) !important; box-shadow: 0 0 0 3px rgba(248,113,113,0.1) !important; }
+.modal-err { font-size: 11.5px; color: #f87171; margin-top: 4px; display: none; }
+.modal-err.show { display: block; }
+
+/* Sidebar nav active */
+.sidebar nav a {
+  border-radius: 10px; margin-bottom: 2px;
+  transition: all 0.18s; position: relative;
+}
+.sidebar nav a.active {
+  background: rgba(123,47,255,0.15) !important;
+  color: #c4b5fd !important;
+  border: 1px solid rgba(123,47,255,0.25);
+}
+.sidebar nav a.active::before {
+  content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+  width: 3px; border-radius: 99px; background: #7b2fff;
+}
+
+/* ── SELLER PROFILE OVERLAY — light theme ─────────────── */
+.sp-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(15,19,40,0.55);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px; overflow-y: auto;
+  backdrop-filter: blur(8px);
+}
+.sp-overlay.hidden { display: none; }
+.sp-card {
+  background: #ffffff;
+  border: 1px solid #dde3f5;
+  border-radius: 18px; padding: 38px 42px;
+  width: 100%; max-width: 500px;
+  margin: auto 0;
+  box-shadow: 0 24px 64px rgba(13,19,64,0.13);
+  position: relative; overflow: visible;
+}
+.sp-card::before { display: none; }
+.sp-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #eef2ff; border: 1px solid rgba(37,99,235,0.2);
+  border-radius: 99px; padding: 5px 14px; margin-bottom: 18px;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: #2563eb;
+}
+.sp-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: #2563eb;
+  animation: sp-blink 2s infinite;
+}
+@keyframes sp-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sp-card h2 {
+  font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800;
+  letter-spacing: -0.5px; color: #0d1340; margin-bottom: 6px;
+}
+.sp-card .sp-sub { font-size: 13.5px; color: #6b7280; margin-bottom: 26px; line-height: 1.5; }
+.sp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sp-full { grid-column: 1/-1; }
+.sp-field { display: flex; flex-direction: column; gap: 5px; }
+.sp-field label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: #6b7280;
+}
+.sp-field input {
+  padding: 10px 14px;
+  background: #f5f7ff; border: 1.5px solid #dde3f5;
+  border-radius: 9px; color: #0d1340; font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif; outline: none; transition: all 0.18s;
+  margin: 0 !important; box-shadow: none !important;
+}
+.sp-field input:focus {
+  border-color: #2563eb; background: #fff;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+.sp-field input::placeholder { color: #b8c0d8; }
+.sp-submit {
+  margin-top: 22px; width: 100%; padding: 13px;
+  background: #2563eb;
+  border: none; border-radius: 10px; color: #fff;
+  font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.18s;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+}
+.sp-submit:hover { background: #1d55d4; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.4); }
+
+/* ── PROFILE BANNER (sidebar) ────────────────────────── */
+.sp-banner {
+  background: #f5f7ff; border: 1px solid #dde3f5;
+  border-radius: 12px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+.sp-av {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 700; color: #fff;
+  font-family: 'Syne', sans-serif; flex-shrink: 0;
+}
+.sp-av-info { flex: 1; min-width: 0; }
+.sp-av-name {
+  font-size: 13px; font-weight: 700; color: #0d1340;
+  margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-av-meta {
+  font-size: 11px; color: #8892bb;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-edit-btn {
+  padding: 5px 10px; background: #fff;
+  border: 1px solid #dde3f5; border-radius: 7px;
+  color: #3d4a7a; font-size: 11px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.18s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.sp-edit-btn:hover { background: #eef2ff; color: #2563eb; border-color: rgba(37,99,235,0.3); }
+
+/* ── LOCATION DROPDOWN — light theme ─────────────────── */
+.loc-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.loc-field   { position: relative; }
+.loc-trigger {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 14px;
+  background: #f5f7ff; border: 1.5px solid #dde3f5;
+  border-radius: 9px; color: #8892bb;
+  font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+  cursor: pointer; transition: all 0.18s;
+  user-select: none; box-sizing: border-box;
+}
+.loc-trigger:hover    { border-color: #2563eb; background: #fff; }
+.loc-trigger.open     { border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); color: #0d1340; }
+.loc-trigger.selected { color: #0d1340; border-color: rgba(37,99,235,0.4); }
+.loc-trigger.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.loc-value  { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-arrow  { font-size: 11px; color: #b8c0d8; transition: transform 0.2s; flex-shrink: 0; }
+.loc-trigger.open .loc-arrow { transform: rotate(180deg); color: #2563eb; }
+
+.loc-drop {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #ffffff;
+  border: 1.5px solid #dde3f5;
+  border-radius: 11px;
+  box-shadow: 0 8px 32px rgba(13,19,64,0.12);
+  z-index: 2000; overflow: hidden;
+  opacity: 0; transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.loc-drop.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+.loc-search-wrap { padding: 8px 8px 4px; border-bottom: 1px solid #eaedfa; }
+.loc-search {
+  width: 100%; padding: 8px 12px;
+  background: #f5f7ff; border: 1.5px solid #dde3f5;
+  border-radius: 7px; color: #0d1340;
+  font-family: 'DM Sans', sans-serif; font-size: 13px;
+  outline: none; box-sizing: border-box;
+  margin: 0 !important; box-shadow: none !important;
+}
+.loc-search:focus { border-color: #2563eb; background: #fff; }
+.loc-search::placeholder { color: #b8c0d8; }
+
+.loc-list {
+  list-style: none !important;
+  max-height: 220px; overflow-y: scroll;
+  padding: 4px 0; margin: 0;
+  scrollbar-width: thin; scrollbar-color: #c8d1ef transparent;
+}
+.loc-list::-webkit-scrollbar       { width: 3px; }
+.loc-list::-webkit-scrollbar-track { background: transparent; }
+.loc-list::-webkit-scrollbar-thumb { background: #c8d1ef; border-radius: 99px; }
+.loc-list li {
+  list-style: none !important;
+  padding: 9px 14px; font-size: 13px; color: #3d4a7a;
+  cursor: pointer; transition: background 0.12s, color 0.12s;
+}
+.loc-list li:hover  { background: #eef2ff; color: #0d1340; }
+.loc-list li.active { background: #eef2ff; color: #2563eb; font-weight: 600; }
+.loc-list li.active::after { content: '✓'; float: right; font-size: 11px; color: #2563eb; }
+.loc-loading, .loc-placeholder, .loc-empty {
+  text-align: center !important; color: #8892bb !important;
+  font-size: 12px !important; padding: 16px !important; cursor: default !important;
+}
+.loc-offline-badge {
+  display: none; font-size: 11px; color: #d97706;
+  padding: 5px 12px; text-align: center;
+  background: rgba(217,119,6,0.07);
+  border-bottom: 1px solid rgba(217,119,6,0.15);
+}
+.loc-offline-badge.visible { display: block; }
+
+/* ── FIX AUTOFILL for light overlay ─────────────────── */
+.sp-overlay input:-webkit-autofill,
+.sp-overlay input:-webkit-autofill:hover,
+.sp-overlay input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #f5f7ff inset !important;
+  -webkit-text-fill-color: #0d1340 !important;
+  caret-color: #eef2ff !important;
+  border-color: rgba(123,47,255,0.35) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+</style>
+</head>
 <body>
+
+
+<!-- ── SELLER PROFILE OVERLAY ───────────────────────── -->
+<div class="sp-overlay hidden" id="sp-overlay">
+  <div class="sp-card">
+    <div class="sp-badge">Seller Profile</div>
+    <h2>Complete Your Profile</h2>
+    <p class="sp-sub">Buyers see these contact details when you send a quote. Keep them accurate.</p>
+    <div class="sp-grid">
+      <div class="sp-field sp-full">
+        <label>Full Name</label>
+        <input id="sp-name" placeholder="Your full name" autocomplete="off">
+      </div>
+      <div class="sp-field">
+        <label>Mobile</label>
+        <input id="sp-mobile" type="tel" placeholder="+91 98765 43210" autocomplete="off">
+      </div>
+      <div class="sp-field">
+        <label>Email</label>
+        <input id="sp-email" type="email" placeholder="you@company.com" autocomplete="off">
+      </div>
+      <div class="sp-field">
+        <label>Company / Business</label>
+        <input id="sp-company" placeholder="Your company name" autocomplete="off">
+      </div>
+      <div class="sp-field sp-full">
+        <label>Location</label>
+        <div class="loc-wrapper" id="sp-loc-wrapper" style="margin-top:0;">
+
+          <!-- STATE -->
+          <div class="loc-field">
+            <div class="loc-trigger" id="sp-state-trigger" onclick="_spLocToggle('state')">
+              <span class="loc-value" id="sp-state-value">Select State</span>
+              <span class="loc-arrow">▾</span>
+            </div>
+            <div class="loc-drop" id="sp-state-drop">
+              <div class="loc-offline-badge" id="sp-state-offline-badge">⚡ Offline — major states only</div>
+              <div class="loc-search-wrap">
+                <input class="loc-search" id="sp-state-search" placeholder="Search state…"
+                       oninput="_spLocFilterList('state')" autocomplete="off">
+              </div>
+              <ul class="loc-list" id="sp-state-list">
+                <li class="loc-loading">Loading…</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- CITY -->
+          <div class="loc-field">
+            <div class="loc-trigger disabled" id="sp-city-trigger" onclick="_spLocToggle('city')">
+              <span class="loc-value" id="sp-city-value">Select City</span>
+              <span class="loc-arrow">▾</span>
+            </div>
+            <div class="loc-drop" id="sp-city-drop">
+              <div class="loc-offline-badge" id="sp-city-offline-badge">⚡ Offline — major cities only</div>
+              <div class="loc-search-wrap">
+                <input class="loc-search" id="sp-city-search" placeholder="Search city…"
+                       oninput="_spLocFilterList('city')" autocomplete="off">
+              </div>
+              <ul class="loc-list" id="sp-city-list">
+                <li class="loc-placeholder">← Choose a state first</li>
+              </ul>
+            </div>
+          </div>
+
+          <input type="hidden" id="sp-city-hidden">
+        </div>
+      </div>
+    </div>
+    <button class="sp-submit" onclick="saveSellerProfile()">Save Profile & Continue →</button>
+  </div>
+</div>
 
 <div class="app">
 
-  <!-- SIDEBAR -->
+  <!-- ── SIDEBAR ───────────────────────────────────────── -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">🔷</div>
@@ -22,317 +545,713 @@
       </div>
     </div>
 
-    <nav>
+    <nav id="sidebar-nav">
+
+      <!-- Profile Banner -->
+      <div class="sp-banner" id="sp-banner" style="display:none;">
+        <div class="sp-av" id="sp-av">S</div>
+        <div class="sp-av-info">
+          <div class="sp-av-name" id="sp-av-name">—</div>
+          <div class="sp-av-meta">
+            <span id="sp-av-company">—</span>
+          </div>
+        </div>
+        <button class="sp-edit-btn" onclick="editSellerProfile()">✏ Edit</button>
+      </div>
       <span class="sidebar-section">Main</span>
-      <a class="active"><span class="nav-icon">📊</span> Dashboard</a>
-      <a onclick="loadInquiries()"><span class="nav-icon">🔍</span> Browse Inquiries</a>
+      <a class="active" onclick="setTab('open')" data-tab="open"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
+      <a onclick="setTab('responded')" data-tab="responded"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span> Responded</a>
+      <a onclick="setTab('rejected')" data-tab="rejected"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></span> Rejected</a>
 
       <span class="sidebar-section">Account</span>
-      <a href="/"><span class="nav-icon">🏠</span> Home</a>
+      <a href="/"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span> Home</a>
     </nav>
 
     <div class="sidebar-user" onclick="logout()">
-  <div class="avatar">S</div>
-
-  <div class="user-info">
-    <div class="u-name" id="username"></div>
-    <div class="u-role" id="userEmail">Seller </div>
-  </div>
-
-  <div class="u-out">⏻</div>
-</div>
+      <div class="avatar" id="sidebar-avatar">S</div>
+      <div class="user-info">
+        <div class="u-name" id="username"></div>
+        <div class="u-role" id="userEmail">Seller</div>
+      </div>
+      <div class="u-out">⏻</div>
+    </div>
   </aside>
 
-  <!-- MAIN -->
+  <!-- ── MAIN ─────────────────────────────────────────── -->
   <div class="main">
 
     <div class="topbar">
       <div class="topbar-left">
-        <h1>Seller Dashboard</h1>
+        <h1 id="page-title">Seller Dashboard</h1>
+        <div class="sub" id="topbar-sub">Browse and respond to open inquiries</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-chip">
+          <span class="chip-dot" style="background:#6ee7b7;"></span>
+          <span id="topbar-name">Seller</span>
+        </div>
+        <span class="role-pill" style="background:rgba(110,231,183,0.1);color:#6ee7b7;border:1px solid rgba(110,231,183,0.2);">Seller</span>
       </div>
     </div>
 
     <div class="page">
 
       <!-- STATS -->
-      <div class="stats">
-
-        <div class="stat-card purple">
-          <h2 id="count-open">0</h2>
-          <p>Open Inquiries</p>
+      <div class="stats-slim">
+        <div class="stat-slim">
+          <div class="stat-slim-icon si-blue"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <div><div class="stat-slim-val" id="stat-open">0</div><div class="stat-slim-lbl">Open Inquiries</div></div>
         </div>
-
-        <div class="stat-card blue clickable" onclick="loadResponses()">
-          <h2 id="count-quotes">0</h2>
-          <p>Quotes Sent</p>
+        <div class="stat-slim clickable" onclick="setTab('responded')">
+          <div class="stat-slim-icon si-green"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <div><div class="stat-slim-val" id="stat-responded">0</div><div class="stat-slim-lbl">Responded</div></div>
         </div>
-
-        <div class="stat-card green">
-          <h2 id="count-cats">0</h2>
-          <p>Categories</p>
+        <div class="stat-slim clickable" onclick="setTab('rejected')">
+          <div class="stat-slim-icon si-red"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+          <div><div class="stat-slim-val" id="stat-rejected">0</div><div class="stat-slim-lbl">Rejected</div></div>
         </div>
-
+        <div class="stat-slim">
+          <div class="stat-slim-icon si-purple"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+          <div><div class="stat-slim-val" id="stat-rate">0%</div><div class="stat-slim-lbl">Response Rate</div></div>
+        </div>
       </div>
 
-      <!-- FILTER -->
-      <div class="filter-row">
-        <select id="cat-filter" onchange="applyFilter()"></select>
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-btn-open"      onclick="setTab('open')">
+          Open <span class="tab-badge" id="badge-open">0</span>
+        </button>
+        <button class="tab-btn" id="tab-btn-responded" onclick="setTab('responded')">
+          Responded <span class="tab-badge" id="badge-responded">0</span>
+        </button>
+        <button class="tab-btn" id="tab-btn-rejected"  onclick="setTab('rejected')">
+          Rejected <span class="tab-badge red" id="badge-rejected">0</span>
+        </button>
+      </div>
 
-        <select id="city-filter" onchange="applyFilter()">
+      <!-- TOOLBAR (search + filter) -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
+          <input class="search-input" id="search-input" placeholder="Search by category, company, city…"
+                 autocomplete="off" oninput="applyFilter()">
+        </div>
+        <select class="filter-sel" id="cat-filter" onchange="applyFilter()">
+          <option value="">All Categories</option>
+        </select>
+        <select class="filter-sel" id="city-filter" onchange="applyFilter()">
           <option value="">All Cities</option>
         </select>
-
-        <button class="secondary-btn" onclick="loadInquiries()">Reset</button>
+        <button class="reset-btn" onclick="resetFilters()">↺ Reset</button>
       </div>
 
-      <!-- CONTENT -->
-      <div id="content" class="inquiry-list"></div>
+      <!-- CONTENT AREA -->
+      <div id="content"></div>
 
     </div>
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- ── QUOTE MODAL ────────────────────────────────────── -->
 <div id="modal" class="modal-overlay hidden">
   <div class="modal">
-
     <div class="modal-header">
       <h3>Send Quote</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
-    <label>Message</label>
-    <textarea id="msg"></textarea>
+    <div class="modal-field">
+      <label>Your Price (₹) <span class="req">*</span></label>
+      <input class="modal-input" id="modal-price" type="number"
+             placeholder="e.g. 14500" autocomplete="off"
+             oninput="clearModalErr('modal-price','err-price')">
+      <div class="modal-err" id="err-price">⚠ Please enter your quoted price</div>
+    </div>
 
-    <label>Price</label>
-    <input id="price" type="number">
+    <div class="modal-field">
+      <label>Message to Buyer <span class="req">*</span></label>
+      <textarea class="modal-input" id="modal-msg" rows="4"
+                placeholder="Describe your offer — delivery timeline, quality, after-sales support…"
+                autocomplete="off"
+                oninput="clearModalErr('modal-msg','err-msg')"></textarea>
+      <div class="modal-err" id="err-msg">⚠ Please add a message for the buyer</div>
+    </div>
 
     <div class="modal-actions">
       <button class="secondary-btn" onclick="closeModal()">Cancel</button>
-      <button onclick="submitQuote()">Send</button>
+      <button id="modal-submit-btn" onclick="submitQuote()">Send Quote</button>
     </div>
-
   </div>
 </div>
 
-<!-- SAME HEAD + CSS (unchanged) -->
+<div id="toast"></div>
 
 <script>
 
-const userId = localStorage.getItem("user_id")
-
-const username = localStorage.getItem("username") || "Seller";
-const email = localStorage.getItem("email") || "";
-
-// name
-document.getElementById("username").innerText = username;
-
-// email below (optional)
-document.getElementById("userEmail").innerText = email;
-
-// avatar
-document.querySelector(".avatar").innerText =
-  username.charAt(0).toUpperCase();
-let allInquiries = []
-let currentInquiry = null
-
-window.onload = () => {
-  loadCategories()
-  loadCities()      // ✅ ONLY from DB
-  loadInquiries()
-  loadStats()
+/* ══════════════════════════════════════════════════
+   SELLER PROFILE
+══════════════════════════════════════════════════ */
+function getSellerProfile() {
+  const raw = localStorage.getItem("seller_profile");
+  return raw ? JSON.parse(raw) : null;
 }
 
-/* ---------------- CATEGORIES ---------------- */
-async function loadCategories(){
-  const res = await fetch("/inquiries/meta")
-  const data = await res.json()
+function saveSellerProfile() {
+  const name     = document.getElementById("sp-name").value.trim();
+  const mobile   = document.getElementById("sp-mobile").value.trim();
+  const email    = document.getElementById("sp-email").value.trim() || localStorage.getItem("email") || "";
+  const company  = document.getElementById("sp-company").value.trim();
+  const location = document.getElementById("sp-city-hidden").value.trim();
 
+  if (!name) { showToast("Please enter your name", "error"); return; }
+
+  const p = { name, mobile, email, company, location };
+  localStorage.setItem("seller_profile", JSON.stringify(p));
+  localStorage.setItem("username", name);
+
+  document.getElementById("sp-overlay").classList.add("hidden");
+  applySellerProfile(p);
+  showToast("Profile saved!", "success");
+
+  // persist to backend
+  fetch(`/seller/profile/${userId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(p)
+  }).catch(() => {});
+}
+
+function applySellerProfile(p) {
+  const initial = p.name.charAt(0).toUpperCase();
+  document.getElementById("sp-av").innerText       = initial;
+  document.getElementById("sp-av-name").innerText  = p.name;
+  document.getElementById("sp-av-company").innerText = p.company || p.location || "";
+  document.getElementById("sp-banner").style.display = "";
+
+  // also update sidebar avatar + topbar
+  document.getElementById("sidebar-avatar").innerText  = initial;
+  document.getElementById("username").innerText        = p.name;
+  document.getElementById("userEmail").innerText       = p.email || localStorage.getItem("email") || "";
+}
+
+function editSellerProfile() {
+  const p = getSellerProfile();
+  if (p) {
+    document.getElementById("sp-name").value     = p.name     || "";
+    document.getElementById("sp-mobile").value   = p.mobile   || "";
+    document.getElementById("sp-email").value    = p.email    || "";
+    document.getElementById("sp-company").value  = p.company  || "";
+    // restore city display
+    if (p.location) {
+      document.getElementById("sp-city-value").textContent = p.location;
+      document.getElementById("sp-city-hidden").value      = p.location;
+      document.getElementById("sp-city-trigger").classList.add("selected");
+      document.getElementById("sp-city-trigger").classList.remove("disabled");
+    }
+  }
+  document.getElementById("sp-overlay").classList.remove("hidden");
+}
+
+/* ══════════════════════════════════════════════════
+   GUARD + IDENTITY
+══════════════════════════════════════════════════ */
+if (localStorage.getItem("role") !== "seller") {
+  localStorage.clear();
+  window.location.href = "/login?role=seller";
+}
+
+const userId   = localStorage.getItem("user_id");
+const username = localStorage.getItem("username") || "Seller";
+const email    = localStorage.getItem("email") || "";
+
+document.getElementById("username").innerText       = username;
+document.getElementById("userEmail").innerText      = email;
+document.getElementById("topbar-name").innerText    = username;
+document.getElementById("sidebar-avatar").innerText = username.charAt(0).toUpperCase();
+
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let allInquiries  = [];   // all from /inquiries/all
+let myQuotes      = [];   // seller's own quotes from /quotes/seller/{id}
+let currentTab    = "open";
+let expandedId    = null;
+let currentModal  = null;
+
+// Clean SVG icons per category — no emoji
+const ICONS = {
+  electronics: `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+  furniture:   `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 10V6a2 2 0 012-2h12a2 2 0 012 2v4M4 10h16M4 10v8M20 10v8M8 18h8"/></svg>`,
+  textiles:    `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,
+  food:        `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>`,
+  industrial:  `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 20h20M4 20V10l6-6 6 6v10M10 20v-6h4v6"/></svg>`,
+  it:          `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>`,
+  marketing:   `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+  logistics:   `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v5h-7V8zM5.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 21a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>`,
+  construction:`<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M2 20h20M4 20v-8l8-8 8 8v8M9 20v-5h6v5"/></svg>`,
+  healthcare:  `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+  automotive:  `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2v-4l2-5h14l2 5v4a2 2 0 01-2 2h-2M5 17a2 2 0 104 0M15 17a2 2 0 104 0"/></svg>`,
+  other:       `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+};
+function catIcon(cat) {
+  const c = (cat || "").toLowerCase();
+  if (c.includes("electronic")) return ICONS.electronics;
+  if (c.includes("furniture"))  return ICONS.furniture;
+  if (c.includes("textile"))    return ICONS.textiles;
+  if (c.includes("food"))       return ICONS.food;
+  if (c.includes("industrial")) return ICONS.industrial;
+  if (c.includes("it ") || c.includes("software") || c.includes("tech")) return ICONS.it;
+  if (c.includes("market"))     return ICONS.marketing;
+  if (c.includes("logistic") || c.includes("transport")) return ICONS.logistics;
+  if (c.includes("construct") || c.includes("build"))    return ICONS.construction;
+  if (c.includes("health") || c.includes("medical"))     return ICONS.healthcare;
+  if (c.includes("auto") || c.includes("vehicle"))       return ICONS.automotive;
+  return ICONS.other;
+}
+
+/* ══════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════ */
+window.addEventListener("DOMContentLoaded", async () => {
+
+  // profile — overlay starts hidden by default (see HTML class)
+  const sellerProfile = getSellerProfile();
+  if (sellerProfile) {
+    applySellerProfile(sellerProfile);
+    // stays hidden — profile already exists
+  } else {
+    // first time — pre-fill email from login session, then show overlay
+    const storedEmail = localStorage.getItem("email") || "";
+    if (storedEmail) document.getElementById("sp-email").value = storedEmail;
+    document.getElementById("sp-overlay").classList.remove("hidden");
+  }
+  await Promise.all([loadInquiries(), loadMyQuotes()]);
+  loadCategories();
+  loadCities();
+  setTab("open");
+});
+
+/* ══════════════════════════════════════════════════
+   DATA LOADERS
+══════════════════════════════════════════════════ */
+async function loadInquiries() {
+  const res = await fetch("/inquiries/all");
+  allInquiries = res.ok ? await res.json() : [];
+}
+
+async function loadMyQuotes() {
+  const res = await fetch(`/quotes/seller/${userId}`);
+  myQuotes = res.ok ? await res.json() : [];
+}
+
+async function loadCategories() {
+  const res  = await fetch("/inquiries/meta");
+  const data = res.ok ? await res.json() : { categories: [] };
   document.getElementById("cat-filter").innerHTML =
     `<option value="">All Categories</option>` +
-    data.categories.map(c=>`<option>${c}</option>`).join("")
+    data.categories.map(c => `<option>${c}</option>`).join("");
 }
 
-/* ---------------- CITIES (FIXED) ---------------- */
 async function loadCities() {
-  const res = await fetch('/inquiries/cities')
-  const cities = await res.json()
-
-  const dropdown = document.getElementById("city-filter")
-
-  dropdown.innerHTML = `<option value="">All Cities</option>` +
-    cities.map(c => `<option>${c}</option>`).join("")
+  const res   = await fetch("/inquiries/cities");
+  const cities = res.ok ? await res.json() : [];
+  document.getElementById("city-filter").innerHTML =
+    `<option value="">All Cities</option>` +
+    cities.map(c => `<option>${c}</option>`).join("");
 }
 
-/* ---------------- STATS ---------------- */
-async function loadStats(){
-  const res = await fetch(`/seller/stats/${userId}`)
-  const d = await res.json()
+/* ══════════════════════════════════════════════════
+   TAB LOGIC
+══════════════════════════════════════════════════ */
+function setTab(tab) {
+  currentTab = tab;
+  expandedId = null;
 
-  document.getElementById("count-quotes").innerText = d.quotes_sent
+  // sidebar
+  document.querySelectorAll("#sidebar-nav a[data-tab]").forEach(a => {
+    a.classList.toggle("active", a.dataset.tab === tab);
+  });
+  // tab bar
+  ["open","responded","rejected"].forEach(t => {
+    document.getElementById(`tab-btn-${t}`).classList.toggle("active", t === tab);
+  });
+  // topbar subtitle
+  const subs = {
+    open:      "Browse and respond to open inquiries",
+    responded: "Inquiries you've already sent a quote on",
+    rejected:  "Quotes the buyer declined"
+  };
+  document.getElementById("topbar-sub").innerText = subs[tab] || "";
+
+  applyFilter();
+  updateStats();
 }
 
-/* ---------------- INQUIRIES ---------------- */
-async function loadInquiries(){
-  const res = await fetch("/inquiries/all")
-  allInquiries = await res.json()
+/* ══════════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════════ */
+function updateStats() {
+  const respondedIds = new Set(myQuotes.map(q => q.inquiry_id || q.id));
+  // "responded" = seller sent a quote AND it's in myQuotes
+  // We detect by matching inquiry ids present in myQuotes
+  const myQuoteInquiryIds = new Set(myQuotes.map(q => String(q.inquiry_id)));
 
-  document.getElementById("count-open").innerText = allInquiries.length
-  document.getElementById("count-cats").innerText =
-    new Set(allInquiries.map(i=>i.category)).size
+  const openCount      = allInquiries.filter(i => !myQuoteInquiryIds.has(String(i.id))).length;
+  const respondedCount = myQuotes.length;
+  const total          = allInquiries.length;
+  const rate           = total > 0 ? Math.round((respondedCount / total) * 100) : 0;
 
-  renderInquiries(allInquiries)
+  // rejected count — from myQuotes where buyer rejected (status field or just use quote count from buyer side)
+  // For now we use quotes the seller sent that got removed (we track locally as 0)
+  // We'll count from the rejected tab data length after render
+  document.getElementById("stat-open").innerText      = openCount;
+  document.getElementById("stat-responded").innerText = respondedCount;
+  document.getElementById("stat-rate").innerText      = rate + "%";
+
+  document.getElementById("badge-open").innerText      = openCount;
+  document.getElementById("badge-responded").innerText = respondedCount;
 }
 
-function renderInquiries(data){
-  const el = document.getElementById("content")
+/* ══════════════════════════════════════════════════
+   FILTER + RENDER
+══════════════════════════════════════════════════ */
+function applyFilter() {
+  const q    = document.getElementById("search-input").value.toLowerCase().trim();
+  const cat  = document.getElementById("cat-filter").value;
+  const city = document.getElementById("city-filter").value;
 
-  el.innerHTML = data.map(i=>`
-    <div class="inquiry-card" onclick="viewInquiry(${i.id})">
+  const myQuoteInquiryIds = new Set(myQuotes.map(q => String(q.inquiry_id)));
 
-      <div class="inquiry-card-left">
-        <div class="inq-title">${i.category}</div>
+  if (currentTab === "open") {
+    // open = all inquiries this seller hasn't responded to yet
+    let data = allInquiries.filter(i => !myQuoteInquiryIds.has(String(i.id)));
+    if (cat)  data = data.filter(i => i.category === cat);
+    if (city) data = data.filter(i => i.city === city);
+    if (q)    data = data.filter(i =>
+      (i.category || "").toLowerCase().includes(q) ||
+      (i.company_name || "").toLowerCase().includes(q) ||
+      (i.city || "").toLowerCase().includes(q) ||
+      (i.details || "").toLowerCase().includes(q)
+    );
+    renderOpen(data);
 
-        <div class="inq-footer">
-          <span class="budget"><b>₹${i.budget || "—"}</b></span>
-          <span>${i.city || ""}</span>
+  } else if (currentTab === "responded") {
+    let data = [...myQuotes];
+    if (cat)  data = data.filter(q => q.category === cat);
+    if (city) data = data.filter(q => q.city === city);
+    if (q)    data = data.filter(q =>
+      (q.category || "").toLowerCase().includes(q) ||
+      (q.company_name || "").toLowerCase().includes(q) ||
+      (q.city || "").toLowerCase().includes(q)
+    );
+    renderResponded(data);
+
+  } else {
+    // rejected — quotes from buyer side that rejected this seller's quotes
+    // We'll fetch fresh from the rejected endpoint pattern
+    renderRejected();
+  }
+}
+
+function resetFilters() {
+  document.getElementById("search-input").value = "";
+  document.getElementById("cat-filter").value   = "";
+  document.getElementById("city-filter").value  = "";
+  applyFilter();
+}
+
+/* ══════════════════════════════════════════════════
+   RENDER — OPEN
+══════════════════════════════════════════════════ */
+function renderOpen(data) {
+  const el = document.getElementById("content");
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-box">
+      <div class="empty-icon">🎉</div>
+      <h3>All caught up!</h3>
+      <p>You've responded to all matching inquiries.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = data.map(i => openCard(i)).join("");
+}
+
+function openCard(i) {
+  const icon     = catIcon(i.category);
+  const daysLeft = i.days_left ?? 7;
+  const daysCls  = daysLeft > 4 ? "days-green" : daysLeft > 1 ? "days-amber" : "days-red";
+  const isExp    = expandedId === i.id;
+
+  return `
+  <div class="inq-card${isExp ? " expanded" : ""}" id="card-${i.id}"
+       onclick="${isExp ? "" : `expandCard(${i.id})`}">
+    <div class="inq-header">
+      <div class="inq-cat-icon">${icon}</div>
+      <div class="inq-info">
+        <div class="inq-title-row">
+          <span class="inq-cat">${i.category}</span>
+          <span class="inq-pill pill-open">Open</span>
+        </div>
+        <div class="inq-sub">
+          ${i.city ? `<span>📍 ${i.city}</span>` : ""}
+          ${i.company_name ? `<span>🏢 ${i.company_name}</span>` : ""}
+          <span>💬 ${i.response_count || 0} quotes</span>
         </div>
       </div>
-
-      <div class="inquiry-card-right">
-        <button class="btn-sm" onclick="event.stopPropagation(); openModal(${i.id})">
-          Respond
-        </button>
-        <span class="quote-count">${i.response_count || 0} total quotes</span>
+      <div class="inq-right">
+        <span class="inq-budget" style="color:#c4b5fd;">₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}</span>
+        <span class="days-pill ${daysCls}">${daysLeft}d left</span>
       </div>
-
     </div>
-  `).join("")
+
+    ${isExp ? `
+    <div class="inq-drawer" onclick="event.stopPropagation()">
+      <p class="drawer-desc">${i.details || "No description provided."}</p>
+      <div class="drawer-meta">
+        ${i.budget      ? `<div class="drawer-meta-item"><span class="lbl">Budget</span><span class="val">₹${Number(i.budget).toLocaleString("en-IN")}</span></div>` : ""}
+        ${i.brand       ? `<div class="drawer-meta-item"><span class="lbl">Brand</span><span class="val">${i.brand}</span></div>` : ""}
+        ${i.company_name? `<div class="drawer-meta-item"><span class="lbl">Company</span><span class="val">${i.company_name}</span></div>` : ""}
+        ${i.city        ? `<div class="drawer-meta-item"><span class="lbl">City</span><span class="val">${i.city}</span></div>` : ""}
+      </div>
+      <div class="drawer-actions">
+        <button class="btn-respond" onclick="openModal(${i.id})">💬 Send Quote</button>
+        ${i.file_path ? `<a class="btn-attach" href="/${i.file_path}" target="_blank">📎 Attachment</a>` : ""}
+        <button class="btn-collapse" onclick="collapseCard()">✕ Close</button>
+      </div>
+    </div>` : ""}
+  </div>`;
 }
 
-/* ---------------- VIEW ---------------- */
-function viewInquiry(id){
-  const i = allInquiries.find(x => x.id === id)
-  const el = document.getElementById("content")
-
-  el.innerHTML = `
-    <div class="panel">
-
-      <div class="panel-header">
-        <h2>${i.category}</h2>
-        <span class="tag category">${i.city || ""}</span>
-      </div>
-
-      <div class="inq-desc">
-        ${i.details || "No description provided"}
-      </div>
-
-      ${i.file_path ? `
-        <div style="margin-top:12px;">
-          <a href="/${i.file_path}" target="_blank" class="tag company">
-            📎 View Attachment
-          </a>
-        </div>
-      ` : ""}
-
-      <div class="divider"></div>
-
-      <div class="inq-footer">
-        <span><b>Budget:</b> ₹${i.budget || "—"}</span>
-        <span><b>Total Quotes:</b> ${i.response_count || 0}</span>
-      </div>
-
-      <div style="margin-top:15px;">
-        <button onclick="openModal(${i.id})">Respond</button>
-        <button class="secondary-btn" onclick="loadInquiries()">Back</button>
-      </div>
-
-    </div>
-  `
-}
-
-/* ---------------- FILTER (FIXED) ---------------- */
-function applyFilter(){
-  const cat = document.getElementById("cat-filter").value
-  const city = document.getElementById("city-filter").value
-
-  let data = [...allInquiries]
-
-  if(cat) data = data.filter(i=>i.category===cat)
-  if(city) data = data.filter(i=>i.city===city)
-
-  renderInquiries(data)
-}
-
-/* ---------------- RESPONSES ---------------- */
-async function loadResponses(){
-  const res = await fetch(`/quotes/seller/${userId}`)
-  const data = await res.json()
-
-  const el = document.getElementById("content")
-
-  if(!data.length){
-    el.innerHTML = `<div class="empty-state">No quotes yet</div>`
-    return
+/* ══════════════════════════════════════════════════
+   RENDER — RESPONDED
+══════════════════════════════════════════════════ */
+function renderResponded(data) {
+  const el = document.getElementById("content");
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-box">
+      <div class="empty-icon">📭</div>
+      <h3>No responses yet</h3>
+      <p>Quotes you send will appear here.</p>
+    </div>`;
+    return;
   }
 
-  el.innerHTML = data.map(q=>`
-    <div class="inquiry-card">
+  // Update badge
+  document.getElementById("badge-responded").innerText = data.length;
+  document.getElementById("stat-responded").innerText  = data.length;
 
-      <div class="inquiry-card-left">
-        <div class="inq-title">${q.category}</div>
-        <div class="inq-desc">${q.message}</div>
-
-        <div class="inq-footer">
-          <span><b>${q.company_name || ""}</b></span>
-          <span>${q.city || ""}</span>
+  el.innerHTML = data.map(q => {
+    const icon = catIcon(q.category);
+    const isExp = expandedId === ("r" + q.id);
+    return `
+    <div class="inq-card responded-card${isExp ? " expanded" : ""}" id="card-r${q.id}"
+         onclick="${isExp ? "" : `expandResponded('r${q.id}')`}">
+      <div class="inq-header">
+        <div class="inq-cat-icon">${icon}</div>
+        <div class="inq-info">
+          <div class="inq-title-row">
+            <span class="inq-cat">${q.category}</span>
+            <span class="inq-pill pill-responded">Quote Sent</span>
+          </div>
+          <div class="inq-sub">
+            ${q.city         ? `<span>📍 ${q.city}</span>` : ""}
+            ${q.company_name ? `<span>🏢 ${q.company_name}</span>` : ""}
+          </div>
+        </div>
+        <div class="inq-right">
+          <span class="inq-budget" style="color:#c4b5fd;">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</span>
+          <span class="quote-count-lbl">Your quote</span>
         </div>
       </div>
 
-      <div class="inquiry-card-right">
-        <div class="tag category">₹${q.price}</div>
+      ${isExp ? `
+      <div class="inq-drawer" onclick="event.stopPropagation()">
+        <div class="my-quote-box">
+          <div class="mq-label">Your Quote</div>
+          <div class="mq-price">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</div>
+          <div class="mq-msg">${q.message || "No message"}</div>
+        </div>
+        <div class="drawer-actions">
+          <button class="btn-collapse" onclick="collapseCard()">✕ Close</button>
+        </div>
+      </div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+/* ══════════════════════════════════════════════════
+   RENDER — REJECTED
+══════════════════════════════════════════════════ */
+async function renderRejected() {
+  const el = document.getElementById("content");
+  el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
+
+  // Rejected = quotes that were on the seller's list but buyer rejected (deleted)
+  // We compare what seller sent vs what's still active
+  // Fetch all active seller quotes fresh
+  const res = await fetch(`/quotes/seller/${userId}`);
+  const active = res.ok ? await res.json() : [];
+  const activeIds = new Set(active.map(q => q.id));
+
+  // Compare with myQuotes snapshot — ones missing are rejected
+  const rejected = myQuotes.filter(q => !activeIds.has(q.id));
+
+  document.getElementById("badge-rejected").innerText  = rejected.length;
+  document.getElementById("stat-rejected").innerText   = rejected.length;
+
+  if (!rejected.length) {
+    el.innerHTML = `<div class="empty-box">
+      <div class="empty-icon">👍</div>
+      <h3>No rejections yet</h3>
+      <p>Quotes rejected by buyers will appear here.</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = rejected.map(q => {
+    const icon = catIcon(q.category);
+    return `
+    <div class="inq-card rejected-card">
+      <div class="inq-header">
+        <div class="inq-cat-icon" style="opacity:0.6;">${icon}</div>
+        <div class="inq-info">
+          <div class="inq-title-row">
+            <span class="inq-cat">${q.category}</span>
+            <span class="inq-pill pill-rejected">Rejected</span>
+          </div>
+          <div class="inq-sub">
+            ${q.city         ? `<span>📍 ${q.city}</span>` : ""}
+            ${q.company_name ? `<span>🏢 ${q.company_name}</span>` : ""}
+          </div>
+        </div>
+        <div class="inq-right">
+          <span class="inq-budget" style="color:#f87171;">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</span>
+          <span class="quote-count-lbl" style="color:#f87171;">Declined by buyer</span>
+        </div>
       </div>
-
-    </div>
-  `).join("")
+      <div class="rejected-box" style="margin-top:12px;">
+        <div class="rj-label">Your rejected quote</div>
+        <div class="rj-msg">${q.message || "No message"}</div>
+      </div>
+    </div>`;
+  }).join("");
 }
 
-/* ---------------- MODAL ---------------- */
-function openModal(id){
-  currentInquiry = id
-  document.getElementById("modal").classList.remove("hidden")
+/* ══════════════════════════════════════════════════
+   EXPAND / COLLAPSE CARDS
+══════════════════════════════════════════════════ */
+function expandCard(id) {
+  expandedId = id;
+  applyFilter();
+  // scroll to card
+  setTimeout(() => document.getElementById(`card-${id}`)?.scrollIntoView({ behavior:"smooth", block:"nearest" }), 50);
 }
 
-function closeModal(){
-  document.getElementById("modal").classList.add("hidden")
+function expandResponded(id) {
+  expandedId = id;
+  applyFilter();
+  setTimeout(() => document.getElementById(`card-${id}`)?.scrollIntoView({ behavior:"smooth", block:"nearest" }), 50);
 }
 
-async function submitQuote(){
-  const msg = document.getElementById("msg").value
-  const price = document.getElementById("price").value
-
-  await fetch(`/inquiries/${currentInquiry}/respond`, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      message: msg,
-      price: price,
-      seller_id: userId
-    })
-  })
-
-  closeModal()
-  loadInquiries()
-  loadStats()
+function collapseCard() {
+  expandedId = null;
+  applyFilter();
 }
 
-/* ---------------- LOGOUT ---------------- */
-function logout(){
-  localStorage.clear()
-  window.location.href = "/"
+/* ══════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════ */
+function openModal(id) {
+  currentModal = id;
+  document.getElementById("modal-price").value = "";
+  document.getElementById("modal-msg").value   = "";
+  clearModalErr("modal-price","err-price");
+  clearModalErr("modal-msg","err-msg");
+  document.getElementById("modal").classList.remove("hidden");
 }
 
+function closeModal() {
+  document.getElementById("modal").classList.add("hidden");
+  currentModal = null;
+}
+
+function clearModalErr(inputId, errId) {
+  document.getElementById(inputId)?.classList.remove("error");
+  const e = document.getElementById(errId);
+  if (e) e.classList.remove("show");
+}
+
+async function submitQuote() {
+  const price = document.getElementById("modal-price").value.trim();
+  const msg   = document.getElementById("modal-msg").value.trim();
+  let valid   = true;
+
+  if (!price) { document.getElementById("modal-price").classList.add("error"); document.getElementById("err-price").classList.add("show"); valid = false; }
+  if (!msg)   { document.getElementById("modal-msg").classList.add("error");   document.getElementById("err-msg").classList.add("show");   valid = false; }
+  if (!valid) return;
+
+  const btn = document.getElementById("modal-submit-btn");
+  btn.disabled = true; btn.innerText = "Sending…";
+
+  try {
+    const res = await fetch(`/inquiries/${currentModal}/respond`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg, price: parseFloat(price), seller_id: userId })
+    });
+
+    if (res.ok) {
+      closeModal();
+      showToast("Quote sent! Moving to Responded tab.", "success");
+      collapseCard();
+      await Promise.all([loadInquiries(), loadMyQuotes()]);
+      updateStats();
+      setTimeout(() => setTab("responded"), 800);
+    } else {
+      showToast("Failed to send quote. Try again.", "error");
+    }
+  } catch {
+    showToast("Network error. Try again.", "error");
+  } finally {
+    btn.disabled = false; btn.innerText = "Send Quote";
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════ */
+function logout() { localStorage.clear(); window.location.href = "/"; }
+
+function showToast(msg, type = "success") {
+  const t = document.getElementById("toast");
+  t.innerText = msg; t.className = `show ${type}`;
+  setTimeout(() => { t.className = ""; }, 3200);
+}
 </script>
 
+<!-- ── Location Picker (shared) ─────────────────────── -->
+<script src="/frontend/location-picker.js"></script>
+<script>
+(function () {
+  window._spLocPicker = window.initLocationPicker({
+    namespace:         'spLoc',
+    stateTriggerId:    'sp-state-trigger',
+    stateValueId:      'sp-state-value',
+    stateDropId:       'sp-state-drop',
+    stateSearchId:     'sp-state-search',
+    stateListId:       'sp-state-list',
+    stateOfflineBadge: 'sp-state-offline-badge',
+    cityTriggerId:     'sp-city-trigger',
+    cityValueId:       'sp-city-value',
+    cityDropId:        'sp-city-drop',
+    citySearchId:      'sp-city-search',
+    cityListId:        'sp-city-list',
+    cityOfflineBadge:  'sp-city-offline-badge',
+    cityHiddenId:      'sp-city-hidden',
+    wrapperSelector:   '#sp-loc-wrapper',
+  });
+})();
+</script>
+<script src="/frontend/theme-toggle.js"></script>
 </body>
 </html>

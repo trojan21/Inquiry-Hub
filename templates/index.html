@@ -1,55 +1,58 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Marketplace</title>
-<link rel="stylesheet" href="/frontend/style.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-</head>
+/**
+ * theme-toggle.js
+ * Light is default. Dark is opt-in via data-theme="dark".
+ */
+(function () {
+  const KEY   = 'iq_theme';
+  const LIGHT = 'light';
+  const DARK  = 'dark';
 
-<body class="centered">
+  const MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>`;
+  const SUN  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
 
-<div class="center-box">
-    <h1>Marketplace</h1>
-    <p>Select your role</p>
+  function applyTheme(theme) {
+    if (theme === DARK) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    const btn = document.getElementById('theme-toggle-btn');
+    if (btn) {
+      btn.innerHTML   = theme === DARK ? SUN : MOON;
+      btn.title       = theme === DARK ? 'Switch to Day mode' : 'Switch to Night mode';
+    }
+  }
 
-    <div class="role-buttons">
-        <button onclick="go('buyer')">Buyer</button>
-        <button onclick="go('seller')">Seller</button>
-        <button onclick="go('admin')">Admin</button>
-    </div>
-</div>
+  function toggle() {
+    const current = localStorage.getItem(KEY) || LIGHT;
+    const next    = current === LIGHT ? DARK : LIGHT;
+    localStorage.setItem(KEY, next);
+    applyTheme(next);
+  }
 
-<script>
-const role = localStorage.getItem("role");
+  function injectButton() {
+    if (document.getElementById('theme-toggle-btn')) return;
+    const btn       = document.createElement('button');
+    btn.id          = 'theme-toggle-btn';
+    btn.className   = 'theme-toggle';
+    btn.onclick     = toggle;
 
-if (role) {
-    // 🔥 USER IS LOGGED IN → MODIFY UI
-    document.querySelector("p").innerText = "Welcome back 👋";
+    const container = document.querySelector('.topbar-right');
+    if (container) {
+      container.insertBefore(btn, container.firstChild);
+    } else {
+      btn.style.cssText = 'position:fixed;top:14px;right:14px;z-index:9999;width:36px;height:36px;';
+      document.body.appendChild(btn);
+    }
+    applyTheme(localStorage.getItem(KEY) || LIGHT);
+  }
 
-    // Replace buttons with dashboard CTA
-    document.querySelector(".role-buttons").innerHTML = `
-        <button onclick="goDashboard()">Go to Dashboard</button>
-        <button onclick="logout()">Logout</button>
-    `;
-}
+  // Apply immediately to prevent flash
+  applyTheme(localStorage.getItem(KEY) || LIGHT);
 
-function go(role){
-    window.location.href = `/login?role=${role}`;
-}
-
-function goDashboard(){
-    const role = localStorage.getItem("role");
-
-    if (role === "buyer") window.location.href = "/buyer";
-    else if (role === "seller") window.location.href = "/seller";
-    else if (role === "admin") window.location.href = "/admin";
-}
-
-function logout(){
-    localStorage.clear();
-    window.location.reload();
-}
-</script>
-
-</body>
-</html>
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectButton);
+  } else {
+    injectButton();
+  }
+})();

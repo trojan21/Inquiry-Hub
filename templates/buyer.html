@@ -4,149 +4,435 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Buyer Dashboard — InquiryHub</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/frontend/style.css">
 
 <style>
-/* ── Location Wrapper ────────────────────────────────────── */
-.loc-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  position: relative;
+/* ── PROFILE SETUP OVERLAY ─────────────────────────────── */
+.profile-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(15,17,23,0.5);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px; overflow-y: auto;
 }
-@media (max-width: 540px) {
-  .loc-wrapper { grid-template-columns: 1fr; }
+.profile-overlay.hidden { display: none; }
+
+.profile-card {
+  background: #ffffff;
+  border: 1px solid #e4e6ed;
+  border-radius: 16px;
+  padding: 36px 40px;
+  width: 100%; max-width: 500px;
+  margin: auto 0;
+  box-shadow: 0 20px 60px rgba(15,17,23,0.15);
+  position: relative; overflow: visible;
 }
+.profile-card::before { display: none; }
+
+.profile-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #eef2ff; border: 1px solid rgba(79,70,229,0.2);
+  border-radius: 99px; padding: 5px 14px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: #4f46e5; margin-bottom: 18px;
+}
+.profile-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: #4f46e5; animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.profile-card h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px; font-weight: 800;
+  letter-spacing: -0.5px; color: #0f1117; margin-bottom: 6px;
+}
+.profile-card .sub {
+  font-size: 13.5px; color: #6b7280;
+  margin-bottom: 26px; line-height: 1.5;
+}
+
+.pf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pf-full  { grid-column: 1/-1; }
+.pf-field { display: flex; flex-direction: column; gap: 5px; }
+.pf-field label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: #6b7280;
+}
+.pf-field input {
+  padding: 10px 14px;
+  background: #f8f9fc; border: 1.5px solid #e4e6ed;
+  border-radius: 8px; color: #0f1117; font-size: 13.5px;
+  font-family: 'Geist', 'DM Sans', sans-serif;
+  outline: none; transition: all 0.18s;
+  margin: 0 !important; box-shadow: none !important;
+}
+.pf-field input:focus {
+  border-color: #4f46e5; background: #fff;
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.1) !important;
+}
+.pf-field input::placeholder { color: #c4c9d8; }
+
+.pf-submit {
+  margin-top: 22px; width: 100%; padding: 12px;
+  background: #4f46e5; border: none; border-radius: 8px;
+  color: #fff; font-size: 14px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer; transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+}
+.pf-submit:hover { background: #4338ca; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,70,229,0.35); }
+
+/* ── PROFILE BANNER ──────────────────────────────────── */
+.profile-banner {
+  background: #f8f9ff; border: 1px solid #e4e6ed;
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 0;
+}
+.profile-banner::before { display: none; }
+.pb-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700; color: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif; flex-shrink: 0;
+}
+.pb-info { flex: 1; }
+.pb-name  { font-size: 14px; font-weight: 700; color: #0f1117; margin-bottom: 2px; }
+.pb-meta  { font-size: 12px; color: #9ca3af; display: flex; gap: 10px; flex-wrap: wrap; }
+.pb-edit  {
+  padding: 7px 14px; background: #fff;
+  border: 1px solid #e4e6ed; border-radius: 7px;
+  color: #4b5568; font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: 'Geist', sans-serif; transition: all 0.18s;
+}
+.pb-edit:hover { background: #eef2ff; color: #4f46e5; border-color: rgba(79,70,229,0.3); }
+
+/* ── INQUIRY FORM ────────────────────────────────────── */
+.inq-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px; margin-bottom: 14px;
+}
+.inq-form-grid .span-2 { grid-column: 1/-1; }
+
+.form-label {
+  display: block; margin-bottom: 5px;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280;
+}
+.form-input {
+  width: 100%; padding: 10px 14px;
+  background: #f8f9fc; border: 1.5px solid #e4e6ed;
+  border-radius: 8px; color: #0f1117; font-size: 13.5px;
+  font-family: 'Geist', 'DM Sans', sans-serif;
+  outline: none; transition: all 0.18s; box-sizing: border-box;
+}
+.form-input:focus { border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+.form-input::placeholder { color: #c4c9d8; }
+textarea.form-input { resize: vertical; min-height: 100px; }
+select.form-input { cursor: pointer; }
+select.form-input option { background: #fff; color: #0f1117; }
+
+.file-drop {
+  border: 1.5px dashed #d0d4e8; border-radius: 10px;
+  padding: 20px; text-align: center;
+  cursor: pointer; transition: all 0.18s;
+  background: #f8f9fc; position: relative;
+}
+.file-drop:hover { border-color: #4f46e5; background: #eef2ff; }
+.file-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.file-drop-icon { font-size: 22px; margin-bottom: 6px; }
+.file-drop-text { font-size: 12.5px; color: #9ca3af; }
+.file-drop-text strong { color: #4f46e5; }
+.file-name { font-size: 12px; color: #4f46e5; margin-top: 6px; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 8px; }
+.btn-primary {
+  padding: 11px 24px; background: #4f46e5;
+  border: none; border-radius: 8px;
+  color: #fff; font-size: 13.5px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer; transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+}
+.btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
+.btn-ghost {
+  padding: 11px 18px; background: #f8f9fc;
+  border: 1.5px solid #e4e6ed; border-radius: 8px;
+  color: #4b5568; font-size: 13.5px; font-weight: 500;
+  font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.18s;
+}
+.btn-ghost:hover { background: #f0f1f8; color: #0f1117; }
+
+/* ── QUOTE CARDS ─────────────────────────────────────── */
+.quote-card {
+  background: #fff; border: 1px solid #e4e6ed;
+  border-radius: 12px; padding: 18px 20px;
+  margin-bottom: 10px; transition: border-color 0.18s;
+  box-shadow: 0 1px 3px rgba(15,17,23,0.06);
+}
+.quote-card:hover { border-color: rgba(79,70,229,0.25); }
+.quote-card.accepted { border-color: rgba(5,150,105,0.3); background: #f0fdf8; }
+.quote-top { display: flex; align-items: flex-start; gap: 16px; }
+.quote-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 20px; font-weight: 800; color: #0f1117; white-space: nowrap; min-width: 100px;
+}
+.quote-body { flex: 1; }
+.quote-cat  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #9ca3af; margin-bottom: 4px; }
+.quote-msg  { font-size: 13.5px; color: #4b5568; line-height: 1.55; margin-bottom: 12px; }
+.seller-contact {
+  background: #f8f9fc; border: 1px solid #e4e6ed;
+  border-radius: 9px; padding: 12px 14px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px 16px; margin-bottom: 14px;
+}
+.sc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #9ca3af; margin-bottom: 1px; }
+.sc-val   { font-size: 13px; color: #4f46e5; font-weight: 500; word-break: break-all; }
+.sc-item  { display: flex; flex-direction: column; }
+.quote-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.btn-accept {
+  padding: 8px 16px; background: rgba(5,150,105,0.08);
+  border: 1px solid rgba(5,150,105,0.25); border-radius: 7px;
+  color: #059669; font-size: 13px; font-weight: 600;
+  font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.18s;
+}
+.btn-accept:hover { background: rgba(5,150,105,0.14); }
+.btn-reject-q {
+  padding: 8px 13px; background: rgba(220,38,38,0.06);
+  border: 1px solid rgba(220,38,38,0.18); border-radius: 7px;
+  color: #dc2626; font-size: 13px; font-weight: 500;
+  font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.18s;
+}
+.btn-reject-q:hover { background: rgba(220,38,38,0.12); }
+.accepted-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #059669;
+  background: rgba(5,150,105,0.08); border: 1px solid rgba(5,150,105,0.2);
+  border-radius: 99px; padding: 4px 12px;
+}
+
+/* ── INQUIRY CARDS ───────────────────────────────────── */
+.inq-card-enhanced {
+  background: #fff; border: 1px solid #e4e6ed;
+  border-radius: 12px; padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px; cursor: pointer; transition: all 0.18s;
+  box-shadow: 0 1px 3px rgba(15,17,23,0.05);
+}
+.inq-card-enhanced:hover { border-color: rgba(79,70,229,0.25); background: #f8f9ff; transform: translateX(2px); }
+.inq-cat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: #eef2ff; display: flex; align-items: center;
+  justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.inq-meta { flex: 1; min-width: 0; }
+.inq-meta h4 { font-size: 14px; font-weight: 600; color: #0f1117; margin-bottom: 2px; }
+.inq-meta p  { font-size: 12px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inq-budget  { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; color: #059669; white-space: nowrap; }
+.inq-days    { font-size: 11px; color: #d97706; font-weight: 600; background: rgba(217,119,6,0.08); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+.inq-card-actions { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+
+/* ── SECTION TABS ────────────────────────────────────── */
+.tab-row {
+  display: flex; gap: 4px; background: #f3f4f8;
+  border: 1px solid #e4e6ed; border-radius: 10px;
+  padding: 4px; margin-bottom: 18px;
+}
+.tab-btn {
+  flex: 1; padding: 8px 10px; background: transparent;
+  border: none; border-radius: 7px; color: #9ca3af;
+  font-size: 13px; font-weight: 500; font-family: 'Geist', sans-serif;
+  cursor: pointer; transition: all 0.16s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.tab-btn:hover { color: #4b5568; background: #fff; }
+.tab-btn.active { background: #fff; color: #4f46e5; box-shadow: 0 1px 3px rgba(15,17,23,0.08); font-weight: 600; }
+.tab-count { background: #eef2ff; color: #4f46e5; border-radius: 99px; padding: 1px 7px; font-size: 10.5px; font-weight: 700; }
+
+/* ── CATEGORY CHIPS ──────────────────────────────────── */
+.cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.cat-chip {
+  padding: 9px 12px; border-radius: 8px;
+  border: 1.5px solid #e4e6ed; background: #f8f9fc;
+  font-size: 12.5px; color: #4b5568;
+  cursor: pointer; transition: all 0.14s; text-align: center;
+  font-family: 'Geist', sans-serif;
+}
+.cat-chip:hover { background: #eef2ff; color: #4f46e5; border-color: rgba(79,70,229,0.3); }
+.cat-chip.selected { background: #eef2ff; color: #4f46e5; border-color: #4f46e5; font-weight: 600; }
+
+/* ── STATS ROW ───────────────────────────────────────── */
+.stats-slim { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-slim {
+  background: #fff; border: 1px solid #e4e6ed;
+  border-radius: 12px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 12px;
+  transition: all 0.18s; box-shadow: 0 1px 3px rgba(15,17,23,0.05);
+}
+.stat-slim:hover { border-color: rgba(79,70,229,0.2); box-shadow: 0 4px 12px rgba(15,17,23,0.08); }
+.stat-slim-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.si-blue   { background: rgba(37,99,235,0.08);  color: #2563eb; }
+.si-green  { background: rgba(5,150,105,0.08);  color: #059669; }
+.si-amber  { background: rgba(217,119,6,0.08);  color: #d97706; }
+.si-purple { background: rgba(79,70,229,0.08);  color: #4f46e5; }
+.si-red    { background: rgba(220,38,38,0.08);  color: #dc2626; }
+.stat-slim-val { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: #0f1117; line-height: 1; }
+.stat-slim-lbl { font-size: 11px; color: #9ca3af; margin-top: 2px; font-weight: 500; }
+
+/* ── EMPTY STATE ─────────────────────────────────────── */
+.empty-box { text-align: center; padding: 48px 24px; color: #9ca3af; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-box h3 { font-size: 15px; color: #4b5568; margin-bottom: 6px; font-weight: 600; }
+.empty-box p  { font-size: 13px; }
+
+/* ── LOCATION DROPDOWN ───────────────────────────────── */
+.loc-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; }
+@media (max-width: 540px) { .loc-wrapper { grid-template-columns: 1fr; } }
 .loc-field { position: relative; }
-
 .loc-trigger {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 13px 16px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 10px;
-  color: #4e5f82;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.22s ease;
-  user-select: none;
-  box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 14px;
+  background: #f8f9fc; border: 1.5px solid #e4e6ed;
+  border-radius: 8px; color: #9ca3af;
+  font-family: 'Geist', sans-serif; font-size: 13.5px;
+  cursor: pointer; transition: all 0.18s;
+  user-select: none; box-sizing: border-box;
 }
-.loc-trigger:hover { border-color: rgba(123,47,255,0.4); background: rgba(123,47,255,0.05); }
-.loc-trigger.open {
-  border-color: rgba(123,47,255,0.6);
-  background: rgba(123,47,255,0.08);
-  box-shadow: 0 0 0 3px rgba(123,47,255,0.12);
-  color: #eef2ff;
-}
-.loc-trigger.selected { color: #eef2ff; border-color: rgba(123,47,255,0.35); }
-.loc-trigger.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-.loc-trigger.invalid  { border-color: rgba(255,69,96,0.6) !important; box-shadow: 0 0 0 3px rgba(255,69,96,0.12) !important; }
-
-.loc-icon  { font-size: 16px; flex-shrink: 0; }
+.loc-trigger:hover   { border-color: rgba(79,70,229,0.4); background: #f0f2ff; }
+.loc-trigger.open    { border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); color: #0f1117; }
+.loc-trigger.selected{ color: #0f1117; border-color: rgba(79,70,229,0.4); background: #fff; }
+.loc-trigger.disabled{ opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.loc-trigger.invalid { border-color: rgba(220,38,38,0.5) !important; box-shadow: 0 0 0 3px rgba(220,38,38,0.1) !important; }
+.loc-icon  { font-size: 15px; flex-shrink: 0; }
 .loc-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.loc-arrow { font-size: 11px; color: #4e5f82; transition: transform 0.2s ease; flex-shrink: 0; }
-.loc-trigger.open .loc-arrow { transform: rotate(180deg); color: #7b2fff; }
-
+.loc-arrow { font-size: 11px; color: #9ca3af; transition: transform 0.18s; flex-shrink: 0; }
+.loc-trigger.open .loc-arrow { transform: rotate(180deg); color: #4f46e5; }
 .loc-drop {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0; right: 0;
-  background: #0f1521;
-  border: 1px solid rgba(123,47,255,0.3);
-  border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(123,47,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
-  z-index: 400;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(-8px) scale(0.98);
-  pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+  background: #fff; border: 1px solid #e4e6ed;
+  border-radius: 12px; box-shadow: 0 8px 32px rgba(15,17,23,0.12);
+  z-index: 400; overflow: hidden;
+  opacity: 0; transform: translateY(-6px) scale(0.98);
+  pointer-events: none; transition: opacity 0.16s, transform 0.16s;
 }
 .loc-drop.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-
-.loc-search-wrap { padding: 10px 10px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.loc-search-wrap { padding: 8px 8px 4px; border-bottom: 1px solid #f0f1f8; }
 .loc-search {
-  width: 100%;
-  padding: 9px 14px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  color: #eef2ff;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.18s;
-  box-sizing: border-box;
-  margin: 0 !important;
-  box-shadow: none !important;
+  width: 100%; padding: 8px 12px;
+  background: #f8f9fc; border: 1px solid #e4e6ed;
+  border-radius: 7px; color: #0f1117;
+  font-family: 'Geist', sans-serif; font-size: 13px;
+  outline: none; box-sizing: border-box;
+  margin: 0 !important; box-shadow: none !important;
 }
-.loc-search:focus { border-color: rgba(123,47,255,0.55); background: rgba(123,47,255,0.07); box-shadow: 0 0 0 2px rgba(123,47,255,0.1) !important; }
-.loc-search::placeholder { color: #4e5f82; }
-
+.loc-search:focus { border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 2px rgba(79,70,229,0.1) !important; }
+.loc-search::placeholder { color: #c4c9d8; }
 .loc-list {
-  list-style: none;
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 6px 0;
-  margin: 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(123,47,255,0.5) transparent;
+  list-style: none !important; max-height: 200px; overflow-y: auto;
+  padding: 4px 0; margin: 0;
+  scrollbar-width: thin; scrollbar-color: #d1d5e8 transparent;
 }
-.loc-list::-webkit-scrollbar       { width: 3px; }
-.loc-list::-webkit-scrollbar-track { background: transparent; }
-.loc-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #7b2fff, #2f88ff); border-radius: 99px; }
-
+.loc-list::-webkit-scrollbar { width: 3px; }
+.loc-list::-webkit-scrollbar-thumb { background: #d1d5e8; border-radius: 99px; }
 .loc-list li {
-  padding: 10px 16px;
-  font-size: 13.5px;
-  color: #8b99c0;
-  cursor: pointer;
-  transition: background 0.14s, color 0.14s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  list-style: none !important;
+  padding: 9px 14px; font-size: 13px; color: #4b5568;
+  cursor: pointer; transition: background 0.12s;
 }
-.loc-list li:hover  { background: rgba(123,47,255,0.15); color: #eef2ff; }
-.loc-list li.active { background: rgba(123,47,255,0.2);  color: #d4bbff; font-weight: 600; }
-.loc-list li.active::after { content: '✓'; margin-left: auto; font-size: 11px; color: #7b2fff; }
-
-.loc-loading, .loc-placeholder, .loc-empty {
-  text-align: center !important;
-  color: #4e5f82 !important;
-  font-size: 12.5px !important;
-  padding: 20px 16px !important;
-  cursor: default !important;
-}
-.loc-loading { animation: loc-pulse 1.4s ease-in-out infinite; }
-@keyframes loc-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-.loc-loading::before { content: '⟳ '; display: inline-block; animation: loc-spin 1s linear infinite; }
-@keyframes loc-spin  { to { transform: rotate(360deg); } }
-
-/* Offline warning strip shown at top of dropdown when CDN failed */
-.loc-offline-badge {
-  display: none;
-  font-size: 11px;
-  color: #f59e0b;
-  padding: 6px 14px;
-  text-align: center;
-  background: rgba(245,158,11,0.07);
-  border-bottom: 1px solid rgba(245,158,11,0.18);
-  letter-spacing: 0.01em;
-}
+.loc-list li:hover  { background: #f0f2ff; color: #4f46e5; }
+.loc-list li.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
+.loc-list li.active::after { content: '✓'; float: right; font-size: 11px; color: #4f46e5; }
+.loc-loading, .loc-placeholder, .loc-empty { text-align: center !important; color: #9ca3af !important; font-size: 12px !important; padding: 16px !important; cursor: default !important; }
+.loc-offline-badge { display: none; font-size: 11px; color: #d97706; padding: 5px 12px; text-align: center; background: rgba(217,119,6,0.07); border-bottom: 1px solid rgba(217,119,6,0.15); }
 .loc-offline-badge.visible { display: block; }
+
+/* ── FIELD VALIDATION ────────────────────────────────── */
+.field-wrap { position: relative; }
+.field-error { font-size: 11.5px; color: #dc2626; margin-top: 5px; display: none; align-items: center; gap: 4px; }
+.field-error.show { display: flex; }
+.form-input.error { border-color: rgba(220,38,38,0.5) !important; background: #fff5f5 !important; box-shadow: 0 0 0 3px rgba(220,38,38,0.08) !important; }
+.form-label .req { color: #dc2626; margin-left: 3px; font-size: 10px; }
+.cat-grid.error .cat-chip:not(.selected) { border-color: rgba(220,38,38,0.4); }
+.cat-error { font-size: 11.5px; color: #dc2626; margin-top: 6px; display: none; align-items: center; gap: 4px; }
+.cat-error.show { display: flex; }
+
+/* ── SIDEBAR NAV ─────────────────────────────────────── */
+.sidebar nav a {
+  position: relative; border-radius: 8px;
+  padding: 9px 12px; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: all 0.16s;
+  color: var(--text-2); font-size: 13.5px; font-weight: 500;
+  text-decoration: none; border: 1px solid transparent;
+}
+.sidebar nav a:hover { background: var(--surface-2); color: var(--text-1); }
+.sidebar nav a.active {
+  background: var(--accent-light) !important;
+  color: var(--accent) !important;
+  border-color: rgba(79,70,229,0.15);
+  font-weight: 600;
+}
+
+/* ── PANEL HEADER ────────────────────────────────────── */
+.panel-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.panel-h h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-1); }
+.panel-h .panel-sub { font-size: 12px; color: var(--text-3); }
+
+/* ── AUTOFILL ────────────────────────────────────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #f8f9fc inset !important;
+  -webkit-text-fill-color: #0f1117 !important;
+  caret-color: #0f1117 !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
 </style>
 </head>
 <body>
 
+<!-- ── PROFILE SETUP OVERLAY ────────────────────────── -->
+<div class="profile-overlay" id="profile-overlay">
+  <div class="profile-card">
+    <div class="profile-badge">One-time Setup</div>
+    <h2>Complete Your Profile</h2>
+    <p class="sub">We'll save these details so you never have to re-enter them for future inquiries.</p>
+
+    <div class="pf-grid">
+      <div class="pf-field pf-full">
+        <label>Full Name</label>
+        <input id="pf-name" placeholder="Your full name" autocomplete="off" required>
+      </div>
+      <div class="pf-field">
+        <label>Mobile</label>
+        <input id="pf-mobile" type="tel" placeholder="+91 98765 43210" autocomplete="off">
+      </div>
+      <div class="pf-field">
+        <label>Email</label>
+        <input id="pf-email" type="email" placeholder="you@company.com" autocomplete="off">
+      </div>
+      <div class="pf-field pf-full">
+        <label>Company Name</label>
+        <input id="pf-company" placeholder="Your company or organisation" autocomplete="off">
+      </div>
+      <div class="pf-field pf-full">
+        <label>Profile / LinkedIn Link</label>
+        <input id="pf-link" type="url" placeholder="https://linkedin.com/in/yourprofile" autocomplete="off">
+      </div>
+    </div>
+
+    <button class="pf-submit" onclick="saveProfile()">Save Profile & Continue →</button>
+  </div>
+</div>
+
+<!-- ── APP SHELL ──────────────────────────────────────── -->
 <div class="app">
 
-  <!-- ── SIDEBAR ─────────────────────────── -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-icon">🔷</div>
@@ -156,15 +442,16 @@
       </div>
     </div>
 
-    <nav>
+    <nav id="sidebar-nav">
       <span class="sidebar-section">Main</span>
-      <a class="active"><span class="nav-icon">📊</span> Dashboard</a>
-      <a onclick="showSection('create')"><span class="nav-icon">➕</span> New Inquiry</a>
-      <a onclick="showSection('my')"><span class="nav-icon">📋</span> My Inquiries <span class="nav-dot"></span></a>
-      <a onclick="showSection('quotes')"><span class="nav-icon">💬</span> Received Quotes</a>
+      <a class="active" onclick="switchTab('overview')" data-tab="overview"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Overview</a>
+      <a onclick="switchTab('create')" data-tab="create"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span> New Inquiry</a>
+      <a onclick="switchTab('my')" data-tab="my"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></span> My Inquiries <span class="nav-dot" id="nav-dot-my" style="display:none;"></span></a>
+      <a onclick="switchTab('quotes')" data-tab="quotes"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span> Received Quotes</a>
 
       <span class="sidebar-section">Account</span>
-      <a href="/"><span class="nav-icon">🏠</span> Home</a>
+      <a onclick="editProfile()"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> My Profile</a>
+      <a href="/"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span> Home</a>
     </nav>
 
     <div class="sidebar-user" onclick="logout()">
@@ -177,13 +464,13 @@
     </div>
   </aside>
 
-  <!-- ── MAIN ─────────────────────────────── -->
+  <!-- MAIN -->
   <div class="main">
 
     <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-left">
-        <h1>Buyer Dashboard</h1>
+        <h1 id="page-title">Buyer Dashboard</h1>
         <div class="sub" id="topbar-date">—</div>
       </div>
       <div class="topbar-right">
@@ -197,121 +484,193 @@
 
     <div class="page">
 
-      <!-- STATS -->
-      <div class="stats">
-        <div class="stat-card blue">
-          <div class="stat-icon">📋</div>
-          <h2 id="stat-total">0</h2>
-          <p>Total Inquiries</p>
+      <!-- ── OVERVIEW TAB ─────────────────────────── -->
+      <div id="tab-overview" class="tab-panel">
+
+        <!-- Profile Banner -->
+        <div class="profile-banner" style="margin-bottom:20px;">
+          <div class="pb-avatar" id="pb-avatar">B</div>
+          <div class="pb-info">
+            <div class="pb-name" id="pb-name">—</div>
+            <div class="pb-meta">
+              <span id="pb-company">—</span>
+              <span id="pb-mobile">—</span>
+            </div>
+          </div>
+          <button class="pb-edit" onclick="editProfile()">✏ Edit Profile</button>
         </div>
-        <div class="stat-card green">
-          <div class="stat-icon">💬</div>
-          <h2 id="stat-quotes">0</h2>
-          <p>Quotes Received</p>
+
+        <!-- Stats -->
+        <div class="stats-slim">
+          <div class="stat-slim">
+            <div class="stat-slim-icon si-blue"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+            <div><div class="stat-slim-val" id="stat-total">0</div><div class="stat-slim-lbl">Inquiries</div></div>
+          </div>
+          <div class="stat-slim">
+            <div class="stat-slim-icon si-green"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+            <div><div class="stat-slim-val" id="stat-quotes">0</div><div class="stat-slim-lbl">Quotes</div></div>
+          </div>
+          <div class="stat-slim">
+            <div class="stat-slim-icon si-amber"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div><div class="stat-slim-val" id="stat-open">0</div><div class="stat-slim-lbl">Open</div></div>
+          </div>
+          <div class="stat-slim">
+            <div class="stat-slim-icon si-purple"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            <div><div class="stat-slim-val" id="stat-closed">0</div><div class="stat-slim-lbl">Closed</div></div>
+          </div>
         </div>
-        <div class="stat-card amber">
-          <div class="stat-icon">⏳</div>
-          <h2 id="stat-open">0</h2>
-          <p>Open Inquiries</p>
+
+        <!-- Recent -->
+        <div class="panel">
+          <div class="panel-h">
+            <h2>Recent Inquiries</h2>
+            <span class="panel-sub" onclick="switchTab('my')" style="cursor:pointer;color:#7b2fff;">View all →</span>
+          </div>
+          <div id="recent-list"></div>
         </div>
-        <div class="stat-card purple">
-          <div class="stat-icon">✅</div>
-          <h2 id="stat-closed">0</h2>
-          <p>Closed</p>
+
+        <!-- Recent Quotes -->
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-h">
+            <h2>Latest Quotes</h2>
+            <span class="panel-sub" onclick="switchTab('quotes')" style="cursor:pointer;color:#7b2fff;">View all →</span>
+          </div>
+          <div id="recent-quotes"></div>
         </div>
+
       </div>
 
-      <!-- CREATE INQUIRY -->
-      <div class="panel" id="section-create">
-        <div class="panel-header">
-          <h2>➕ Create New Inquiry</h2>
-        </div>
-        <form id="inq-form">
-          <div class="grid-2">
-            <div class="form-row"><input name="name"         placeholder="Your Name"     required></div>
-            <div class="form-row"><input name="mobile"       placeholder="Mobile"        required></div>
-            <div class="form-row"><input name="email"        placeholder="Email"         required></div>
-            <div class="form-row"><input name="category"     placeholder="Category"      required></div>
-            <div class="form-row"><input name="company_name" placeholder="Company Name"         ></div>
-            <div class="form-row"><input name="budget"       placeholder="Budget (₹)"           ></div>
-            <div class="form-row"><input name="brand"        placeholder="Preferred Brand"       ></div>
+      <!-- ── CREATE INQUIRY TAB ───────────────────── -->
+      <div id="tab-create" class="tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="panel-h">
+            <h2>➕ New Inquiry</h2>
+            <span class="panel-sub">Your profile details are auto-filled</span>
+          </div>
+
+          <!-- Category Chips -->
+          <label class="form-label">Category <span class="req">*required</span></label>
+          <div class="cat-grid" id="cat-chips"></div>
+          <input type="hidden" id="inq-category">
+          <div class="cat-error" id="cat-error">⚠ Please select a category</div>
+          <div style="height:14px;"></div>
+
+          <!-- Form Grid -->
+          <div class="inq-form-grid">
+            <div class="span-2">
+              <label class="form-label">Details / Requirement <span class="req">*required</span></label>
+              <div class="field-wrap">
+                <textarea class="form-input" id="inq-details" autocomplete="off"
+                  placeholder="Describe exactly what you need — specifications, quantities, timelines, quality standards…"
+                  rows="4" oninput="clearErr('inq-details','err-details')"></textarea>
+                <div class="field-error" id="err-details">⚠ Please describe your requirement</div>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">Budget (₹)</label>
+              <input class="form-input" id="inq-budget" type="number" autocomplete="off" placeholder="e.g. 50000">
+            </div>
+            <div>
+              <label class="form-label">Preferred Brand</label>
+              <input class="form-input" id="inq-brand" autocomplete="off" placeholder="e.g. Samsung, L&T, Generic">
+            </div>
 
             <!-- ── State + City Dropdown ── -->
-            <div class="form-row loc-wrapper" id="loc-wrapper">
+            <div class="span-2">
+              <label class="form-label">Location</label>
+              <div class="loc-wrapper" id="loc-wrapper">
 
-              <!-- STATE -->
-              <div class="loc-field" id="state-field">
-                <div class="loc-trigger" id="state-trigger" onclick="toggleDrop('state')">
-                  <span class="loc-icon">🗺️</span>
-                  <span class="loc-value" id="state-value">Select State</span>
-                  <span class="loc-arrow">▾</span>
-                </div>
-                <div class="loc-drop" id="state-drop">
-                  <div class="loc-offline-badge" id="state-offline-badge">⚡ Offline mode — major states only</div>
-                  <div class="loc-search-wrap">
-                    <input class="loc-search" id="state-search" placeholder="Search state…"
-                           oninput="filterList('state')" autocomplete="off">
+                <!-- STATE -->
+                <div class="loc-field" id="state-field">
+                  <div class="loc-trigger" id="state-trigger" onclick="_locToggle('state')">
+                    <span class="loc-icon">🗺️</span>
+                    <span class="loc-value" id="state-value">Select State</span>
+                    <span class="loc-arrow">▾</span>
                   </div>
-                  <ul class="loc-list" id="state-list">
-                    <li class="loc-loading">Loading states…</li>
-                  </ul>
-                </div>
-              </div>
-
-              <!-- CITY -->
-              <div class="loc-field" id="city-field">
-                <div class="loc-trigger disabled" id="city-trigger" onclick="toggleDrop('city')">
-                  <span class="loc-icon">🏙️</span>
-                  <span class="loc-value" id="city-value">Select City</span>
-                  <span class="loc-arrow">▾</span>
-                </div>
-                <div class="loc-drop" id="city-drop">
-                  <div class="loc-offline-badge" id="city-offline-badge">⚡ Offline mode — major cities only</div>
-                  <div class="loc-search-wrap">
-                    <input class="loc-search" id="city-search" placeholder="Search city…"
-                           oninput="filterList('city')" autocomplete="off">
+                  <div class="loc-drop" id="state-drop">
+                    <div class="loc-offline-badge" id="state-offline-badge">⚡ Offline mode — major states only</div>
+                    <div class="loc-search-wrap">
+                      <input class="loc-search" id="state-search" placeholder="Search state…"
+                             oninput="_locFilterList('state')" autocomplete="off">
+                    </div>
+                    <ul class="loc-list" id="state-list">
+                      <li class="loc-loading">Loading states…</li>
+                    </ul>
                   </div>
-                  <ul class="loc-list" id="city-list">
-                    <li class="loc-placeholder">← Choose a state first</li>
-                  </ul>
                 </div>
-              </div>
 
-              <!-- Hidden field submitted with form -->
-              <input type="hidden" name="city" id="city-hidden">
+                <!-- CITY -->
+                <div class="loc-field" id="city-field">
+                  <div class="loc-trigger disabled" id="city-trigger" onclick="_locToggle('city')">
+                    <span class="loc-icon">🏙️</span>
+                    <span class="loc-value" id="city-value">Select City</span>
+                    <span class="loc-arrow">▾</span>
+                  </div>
+                  <div class="loc-drop" id="city-drop">
+                    <div class="loc-offline-badge" id="city-offline-badge">⚡ Offline mode — major cities only</div>
+                    <div class="loc-search-wrap">
+                      <input class="loc-search" id="city-search" placeholder="Search city…"
+                             oninput="_locFilterList('city')" autocomplete="off">
+                    </div>
+                    <ul class="loc-list" id="city-list">
+                      <li class="loc-placeholder">← Choose a state first</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Hidden field submitted with form -->
+                <input type="hidden" id="city-hidden">
+              </div>
             </div>
             <!-- ── End Location Dropdown ── -->
 
+            <div class="span-2">
+              <label class="form-label">Attachment (optional)</label>
+              <div class="file-drop" id="file-drop">
+                <input type="file" id="inq-file" onchange="updateFileLabel(this)">
+                <div class="file-drop-icon">📎</div>
+                <div class="file-drop-text">Drop file here or <strong>browse</strong></div>
+                <div class="file-name" id="file-name-label"></div>
+              </div>
+            </div>
           </div>
-          <div class="form-row">
-            <textarea name="details" placeholder="Describe your requirement in detail…" required></textarea>
+
+          <!-- Profile prefill notice -->
+          <div style="background:rgba(0,229,122,0.05);border:1px solid rgba(0,229,122,0.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">✅</span>
+            <div>
+              <div style="font-size:12.5px;font-weight:600;color:#00e57a;margin-bottom:2px;">Profile auto-filled</div>
+              <div style="font-size:11.5px;color:#4e5f82;">Name, mobile, email, company & profile link from your saved profile</div>
+            </div>
           </div>
-          <div class="form-row">
-            <input type="file" name="file">
+
+          <div class="form-actions">
+            <button class="btn-primary" onclick="submitInquiry()">Submit Inquiry</button>
+            <button class="btn-ghost" onclick="clearInquiryForm()">Clear</button>
           </div>
-          <div style="display:flex;gap:10px;margin-top:4px;">
-            <button type="submit">Submit Inquiry</button>
-            <button type="reset" class="secondary-btn" onclick="resetLocation()">Clear</button>
-          </div>
-        </form>
+        </div>
       </div>
 
-      <!-- MY INQUIRIES -->
-      <div class="panel" id="section-my">
-        <div class="panel-header">
-          <h2>📋 My Inquiries</h2>
-          <span class="panel-action" onclick="loadMy()">Refresh</span>
+      <!-- ── MY INQUIRIES TAB ──────────────────────── -->
+      <div id="tab-my" class="tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="panel-h">
+            <h2>My Inquiries</h2>
+            <button class="btn-ghost" style="padding:7px 14px;font-size:12px;" onclick="loadMy()">↻ Refresh</button>
+          </div>
+          <div id="my-list"></div>
         </div>
-        <div id="my-list" class="inquiry-list"></div>
       </div>
 
-      <!-- QUOTES -->
-      <div class="panel" id="section-quotes">
-        <div class="panel-header">
-          <h2>💬 Received Quotes</h2>
-          <span class="panel-action" onclick="loadQuotes()">Refresh</span>
+      <!-- ── QUOTES TAB ────────────────────────────── -->
+      <div id="tab-quotes" class="tab-panel" style="display:none;">
+        <div class="panel">
+          <div class="panel-h">
+            <h2>Received Quotes</h2>
+            <button class="btn-ghost" style="padding:7px 14px;font-size:12px;" onclick="loadQuotes()">↻ Refresh</button>
+          </div>
+          <div id="quote-list"></div>
         </div>
-        <div id="quote-list" class="inquiry-list"></div>
       </div>
 
     </div>
@@ -320,100 +679,380 @@
 
 <div id="toast"></div>
 
-<!-- ── Dashboard Logic ───────────────────────────────────── -->
 <script>
+/* ══════════════════════════════════════════════
+   GUARD
+══════════════════════════════════════════════ */
 if (localStorage.getItem("role") !== "buyer") {
   localStorage.clear();
   window.location.href = "/login?role=buyer";
 }
 
-const username = localStorage.getItem("username") || "Buyer";
 const buyerId  = localStorage.getItem("user_id");
+const userEmail = localStorage.getItem("email") || "";
 
-document.getElementById("topbar-name").innerText    = username;
-document.getElementById("sidebar-name").innerText   = username;
-document.getElementById("sidebar-avatar").innerText = username.charAt(0).toUpperCase();
-document.getElementById("topbar-date").innerText    =
+/* ══════════════════════════════════════════════
+   PROFILE SYSTEM
+══════════════════════════════════════════════ */
+function getProfile() {
+  const raw = localStorage.getItem("buyer_profile");
+  return raw ? JSON.parse(raw) : null;
+}
+
+function saveProfile() {
+  const name    = document.getElementById("pf-name").value.trim();
+  const mobile  = document.getElementById("pf-mobile").value.trim();
+  const email   = document.getElementById("pf-email").value.trim() || userEmail;
+  const company = document.getElementById("pf-company").value.trim();
+  const link    = document.getElementById("pf-link").value.trim();
+
+  if (!name) { showToast("Please enter your name", "error"); return; }
+
+  const profile = { name, mobile, email, company, link };
+  localStorage.setItem("buyer_profile", JSON.stringify(profile));
+  localStorage.setItem("username", name);
+
+  document.getElementById("profile-overlay").classList.add("hidden");
+  applyProfile(profile);
+  showToast("Profile saved!", "success");
+}
+
+function applyProfile(p) {
+  const initial = p.name.charAt(0).toUpperCase();
+  document.getElementById("sidebar-avatar").innerText = initial;
+  document.getElementById("sidebar-name").innerText   = p.name;
+  document.getElementById("topbar-name").innerText    = p.name;
+  document.getElementById("pb-avatar").innerText      = initial;
+  document.getElementById("pb-name").innerText        = p.name;
+  document.getElementById("pb-company").innerText     = p.company ? "🏢 " + p.company : "";
+  document.getElementById("pb-mobile").innerText      = p.mobile ? "📱 " + p.mobile : "";
+}
+
+function editProfile() {
+  const p = getProfile();
+  if (p) {
+    document.getElementById("pf-name").value    = p.name || "";
+    document.getElementById("pf-mobile").value  = p.mobile || "";
+    document.getElementById("pf-email").value   = p.email || userEmail;
+    document.getElementById("pf-company").value = p.company || "";
+    document.getElementById("pf-link").value    = p.link || "";
+  }
+  document.getElementById("profile-overlay").classList.remove("hidden");
+}
+
+/* ══════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════ */
+document.getElementById("topbar-date").innerText =
   new Date().toLocaleDateString("en-IN", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
 
-window.addEventListener("DOMContentLoaded", () => { loadMy(); loadQuotes(); });
+window.addEventListener("DOMContentLoaded", () => {
+  const profile = getProfile();
+  if (!profile) {
+    // Pre-fill email from localStorage if available
+    document.getElementById("pf-email").value = userEmail;
+    document.getElementById("profile-overlay").classList.remove("hidden");
+  } else {
+    document.getElementById("profile-overlay").classList.add("hidden");
+    applyProfile(profile);
+  }
+  buildCategoryChips();
+  loadMy();
+  loadQuotes();
+});
 
+/* ══════════════════════════════════════════════
+   TAB NAVIGATION — with active sidebar highlight
+══════════════════════════════════════════════ */
+const tabs = ["overview", "create", "my", "quotes"];
+function switchTab(name) {
+  tabs.forEach(t => {
+    document.getElementById("tab-" + t).style.display = (t === name) ? "" : "none";
+  });
+  // update sidebar active state
+  document.querySelectorAll("#sidebar-nav a[data-tab]").forEach(a => {
+    a.classList.toggle("active", a.dataset.tab === name);
+  });
+  const titles = {
+    overview: "Buyer Dashboard",
+    create:   "New Inquiry",
+    my:       "My Inquiries",
+    quotes:   "Received Quotes"
+  };
+  document.getElementById("page-title").innerText = titles[name] || "Dashboard";
+  if (name === "my")     loadMy();
+  if (name === "quotes") loadQuotes();
+}
+
+/* ══════════════════════════════════════════════
+   CATEGORY CHIPS
+══════════════════════════════════════════════ */
+const CATEGORIES = [
+  "Electronics","Furniture","Textiles","Food & Beverage",
+  "Industrial","IT Services","Marketing","Logistics",
+  "Construction","Healthcare","Automotive","Other"
+];
+
+function buildCategoryChips() {
+  document.getElementById("cat-chips").innerHTML = CATEGORIES.map(c => `
+    <div class="cat-chip" onclick="selectCat(this,'${c}')">${c}</div>
+  `).join("");
+}
+
+function selectCat(el, cat) {
+  document.querySelectorAll(".cat-chip").forEach(c => c.classList.remove("selected"));
+  el.classList.add("selected");
+  document.getElementById("inq-category").value = cat;
+}
+
+function updateFileLabel(input) {
+  const lbl = document.getElementById("file-name-label");
+  lbl.innerText = input.files[0] ? "📎 " + input.files[0].name : "";
+}
+
+/* ══════════════════════════════════════════════
+   DATA LOADERS
+══════════════════════════════════════════════ */
 async function loadMy() {
   const el = document.getElementById("my-list");
   el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
   try {
     const res  = await fetch(`/inquiries/my/${buyerId}`);
     const data = res.ok ? await res.json() : [];
+
     document.getElementById("stat-total").innerText  = data.length;
-    document.getElementById("stat-open").innerText   = data.filter(i => i.status !== "closed").length;
-    document.getElementById("stat-closed").innerText = data.filter(i => i.status === "closed").length;
-    if (!data.length) { el.innerHTML = `<div class="empty-state">No inquiries yet. Create your first one!</div>`; return; }
-    el.innerHTML = data.map(i => `
-      <div class="inquiry-card" onclick="viewDetail(${i.id})">
-        <div class="inquiry-card-left">
-          <div class="inq-title">${i.title || i.category}</div>
-          <div class="inq-tags">
-            <span class="tag category">${i.category}</span>
-            <span class="tag ${i.status === 'closed' ? 'closed' : 'open'}">${i.status || 'open'}</span>
-            ${i.company_name ? `<span class="tag company">🏢 ${i.company_name}</span>` : ""}
-          </div>
-          <div class="inq-desc">${(i.details || i.description || "").slice(0, 100)}…</div>
-          <div class="inq-footer">
-            <span class="budget">🔥 Budget: <b>₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}</b></span>
-          </div>
-        </div>
-        <div class="inquiry-card-right">
-          <button class="danger btn-sm" onclick="event.stopPropagation(); deleteInquiry(${i.id})">🗑 Delete</button>
-        </div>
-      </div>`).join("");
-  } catch { el.innerHTML = `<div class="empty-state">Error loading inquiries.</div>`; }
+    document.getElementById("stat-open").innerText   = data.filter(i => i.days_left > 0).length;
+    document.getElementById("stat-closed").innerText = data.filter(i => i.days_left === 0).length;
+
+    renderRecent(data.slice(0,3));
+
+    if (!data.length) {
+      el.innerHTML = `<div class="empty-box">
+        <div class="empty-icon">📭</div>
+        <h3>No inquiries yet</h3>
+        <p>Post your first requirement to get quotes from sellers.</p>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = data.map(i => inquiryCard(i)).join("");
+  } catch {
+    el.innerHTML = `<div class="empty-box"><div class="empty-icon">⚠️</div><h3>Couldn't load inquiries</h3></div>`;
+  }
+}
+
+function inquiryCard(i) {
+  const icons = {Electronics:"⚡",Furniture:"🪑",Textiles:"🧵","Food & Beverage":"🍽️",Industrial:"🏭","IT Services":"💻",Marketing:"📣",Logistics:"🚚",Construction:"🏗️",Healthcare:"🏥",Automotive:"🚗",Other:"📦"};
+  const icon  = icons[i.category] || "📦";
+  return `
+    <div class="inq-card-enhanced">
+      <div class="inq-cat-icon">${icon}</div>
+      <div class="inq-meta">
+        <h4>${i.category}</h4>
+        <p>${(i.details || "").slice(0, 60)}…</p>
+      </div>
+      <div class="inq-card-actions">
+        <span class="inq-budget">₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}</span>
+        <span class="inq-days">${i.days_left}d left</span>
+        <button class="btn-ghost" style="padding:5px 10px;font-size:11px;"
+          onclick="deleteInquiry(${i.id})">🗑</button>
+      </div>
+    </div>`;
+}
+
+function renderRecent(data) {
+  const el = document.getElementById("recent-list");
+  if (!el) return;
+  if (!data.length) {
+    el.innerHTML = `<div class="empty-box" style="padding:24px;"><div class="empty-icon" style="font-size:28px;">📭</div><p>No inquiries yet</p></div>`;
+    return;
+  }
+  el.innerHTML = data.map(i => inquiryCard(i)).join("");
 }
 
 async function loadQuotes() {
-  const el = document.getElementById("quote-list");
+  const el  = document.getElementById("quote-list");
+  const rel = document.getElementById("recent-quotes");
   el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
   try {
     const res  = await fetch(`/quotes/buyer/${buyerId}`);
     const data = res.ok ? await res.json() : [];
     document.getElementById("stat-quotes").innerText = data.length;
-    if (!data.length) { el.innerHTML = `<div class="empty-state">No quotes received yet.</div>`; return; }
-    el.innerHTML = data.map(q => `
-      <div class="inquiry-card">
-        <div class="inquiry-card-left">
-          <div class="inq-title">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</div>
-          <div class="inq-desc">${q.message || "No message"}</div>
-          <div class="inq-tags">
-            <span class="tag company">📧 ${q.seller_email || "Unknown"}</span>
-          </div>
-        </div>
-        <div class="inquiry-card-right">
-          <button class="danger btn-sm" onclick="rejectQuote(${q.id})">✕ Reject</button>
-        </div>
-      </div>`).join("");
-  } catch { el.innerHTML = `<div class="empty-state">Error loading quotes.</div>`; }
+
+    if (rel) {
+      rel.innerHTML = data.slice(0,2).map(q => quoteCard(q)).join("") ||
+        `<div class="empty-box" style="padding:24px;"><div class="empty-icon" style="font-size:28px;">💬</div><p>No quotes yet</p></div>`;
+    }
+
+    if (!data.length) {
+      el.innerHTML = `<div class="empty-box">
+        <div class="empty-icon">💬</div>
+        <h3>No quotes received yet</h3>
+        <p>Sellers will respond to your inquiries with quotes.</p>
+      </div>`;
+      return;
+    }
+    el.innerHTML = data.map(q => quoteCard(q)).join("");
+  } catch {
+    el.innerHTML = `<div class="empty-box"><div class="empty-icon">⚠️</div><h3>Couldn't load quotes</h3></div>`;
+  }
 }
 
-document.getElementById("inq-form").onsubmit = async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  fd.append("buyer_id", buyerId);
-  const res = await fetch("/inquiries", { method: "POST", body: fd });
-  if (res.ok) {
-    showToast("Inquiry submitted!", "success");
-    e.target.reset();
-    resetLocation();
-    loadMy();
-    showSection("my");
-  } else {
-    showToast("Failed to submit. Try again.", "error");
-  }
-};
+function quoteCard(q) {
+  const accepted = q.status === "accepted";
+  const hasContact = q.seller_name || q.seller_mobile || q.seller_email || q.seller_location;
+  return `
+    <div class="quote-card${accepted ? " accepted" : ""}">
+      <div class="quote-top">
+        <div class="quote-price">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</div>
+        <div class="quote-body">
+          <div class="quote-cat">${q.category || "Inquiry"}</div>
+          <div class="quote-msg">${q.message || "No message provided"}</div>
+        </div>
+      </div>
 
+      ${hasContact ? `
+      <div class="seller-contact" style="margin-top:12px;">
+        ${q.seller_name     ? `<div class="sc-item"><div class="sc-label">Seller Name</div><div class="sc-val">${q.seller_name}</div></div>` : ""}
+        ${q.seller_company  ? `<div class="sc-item"><div class="sc-label">Company</div><div class="sc-val">${q.seller_company}</div></div>` : ""}
+        ${q.seller_email    ? `<div class="sc-item"><div class="sc-label">Email</div><div class="sc-val">${q.seller_email}</div></div>` : ""}
+        ${q.seller_mobile   ? `<div class="sc-item"><div class="sc-label">Phone</div><div class="sc-val">${q.seller_mobile}</div></div>` : ""}
+        ${q.seller_location ? `<div class="sc-item"><div class="sc-label">Location</div><div class="sc-val">${q.seller_location}</div></div>` : ""}
+      </div>` : ""}
+
+      <div class="quote-actions">
+        ${accepted
+          ? `<span class="accepted-badge">✓ Quote Accepted — contact seller to proceed</span>`
+          : `<button class="btn-accept" onclick="acceptQuote(${q.id}, ${q.inquiry_id})">✓ Accept & Close</button>
+             <button class="btn-reject-q" onclick="rejectQuote(${q.id})">✕ Reject</button>`
+        }
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   FIELD VALIDATION HELPERS
+══════════════════════════════════════════════ */
+function showErr(inputId, errId) {
+  const el = document.getElementById(inputId);
+  const er = document.getElementById(errId);
+  if (el) el.classList.add("error");
+  if (er) er.classList.add("show");
+}
+function clearErr(inputId, errId) {
+  const el = document.getElementById(inputId);
+  const er = document.getElementById(errId);
+  if (el) el.classList.remove("error");
+  if (er) er.classList.remove("show");
+}
+
+/* ══════════════════════════════════════════════
+   SUBMIT INQUIRY — with full inline validation
+══════════════════════════════════════════════ */
+async function submitInquiry() {
+  const profile  = getProfile();
+  const category = document.getElementById("inq-category").value;
+  const details  = document.getElementById("inq-details").value.trim();
+  let   valid    = true;
+
+  // category
+  if (!category) {
+    document.getElementById("cat-error").classList.add("show");
+    document.getElementById("cat-chips").classList.add("error");
+    valid = false;
+  } else {
+    document.getElementById("cat-error").classList.remove("show");
+    document.getElementById("cat-chips").classList.remove("error");
+  }
+
+  // details
+  if (!details) { showErr("inq-details","err-details"); valid = false; }
+  else          { clearErr("inq-details","err-details"); }
+
+  // profile guard
+  if (!profile) { showToast("Complete your profile first", "error"); editProfile(); return; }
+
+  if (!valid) {
+    showToast("Please fill in the required fields", "error");
+    // scroll to first error
+    document.querySelector(".error, .show")?.scrollIntoView({ behavior:"smooth", block:"center" });
+    return;
+  }
+
+  // file — guard empty filename
+  const fileInput = document.getElementById("inq-file");
+  const hasFile   = fileInput.files[0] && fileInput.files[0].name;
+
+  const fd = new FormData();
+  fd.append("name",         profile.name    || "");
+  fd.append("mobile",       profile.mobile  || "");
+  fd.append("email",        profile.email   || userEmail);
+  fd.append("company_name", profile.company || "");
+  fd.append("profile_link", profile.link    || "");
+  fd.append("category",     category);
+  fd.append("details",      details);
+  fd.append("budget",       document.getElementById("inq-budget").value || "");
+  fd.append("brand",        document.getElementById("inq-brand").value  || "");
+  fd.append("city",         document.getElementById("city-hidden").value || "");
+  fd.append("buyer_id",     buyerId);
+  if (hasFile) fd.append("file", fileInput.files[0]);
+
+  // disable button to prevent double-submit
+  const btn = document.querySelector("#tab-create .btn-primary");
+  btn.disabled = true;
+  btn.innerText = "Submitting…";
+
+  try {
+    const res = await fetch("/inquiries", { method: "POST", body: fd });
+    if (res.ok) {
+      showToast("Inquiry posted! Sellers will respond soon.", "success");
+      clearInquiryForm();
+      await loadMy();
+      switchTab("my");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.detail || "Failed to submit. Try again.", "error");
+    }
+  } catch {
+    showToast("Network error. Try again.", "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Submit Inquiry";
+  }
+}
+
+function clearInquiryForm() {
+  document.getElementById("inq-details").value = "";
+  document.getElementById("inq-budget").value  = "";
+  document.getElementById("inq-brand").value   = "";
+  document.getElementById("inq-file").value    = "";
+  document.getElementById("file-name-label").innerText = "";
+  document.getElementById("inq-category").value = "";
+  document.querySelectorAll(".cat-chip").forEach(c => c.classList.remove("selected"));
+  resetLocation();
+}
+
+/* ══════════════════════════════════════════════
+   ACTIONS
+══════════════════════════════════════════════ */
 async function deleteInquiry(id) {
   if (!confirm("Delete this inquiry?")) return;
   await fetch(`/inquiries/${id}?buyer_id=${buyerId}`, { method: "DELETE" });
   showToast("Deleted", "info");
   loadMy();
+}
+
+async function acceptQuote(id, inquiryId) {
+  if (!confirm("Accept this quote? The inquiry will close and other quotes will be removed.")) return;
+  const res = await fetch(`/quotes/accept/${id}`, { method: "POST" });
+  const data = await res.json();
+  if (data.success) {
+    showToast("Quote accepted! Contact the seller to proceed.", "success");
+    await loadMy();
+    loadQuotes();
+  } else {
+    showToast("Failed to accept. Try again.", "error");
+  }
 }
 
 async function rejectQuote(id) {
@@ -422,11 +1061,7 @@ async function rejectQuote(id) {
   loadQuotes();
 }
 
-function showSection(sec) {
-  document.getElementById(`section-${sec}`)?.scrollIntoView({ behavior: "smooth" });
-}
-function logout()     { localStorage.clear(); window.location.href = "/login?role=buyer"; }
-function viewDetail(id) { window.location.href = `/inquiry/${id}`; }
+function logout() { localStorage.clear(); window.location.href = "/login?role=buyer"; }
 
 function showToast(msg, type = "success") {
   const t = document.getElementById("toast");
@@ -435,323 +1070,32 @@ function showToast(msg, type = "success") {
 }
 </script>
 
-
-<!-- ── Location Dropdown — CDN with offline fallback ─────── -->
+<!-- ── Location Picker (shared) ─────────────────────── -->
+<script src="/frontend/location-picker.js"></script>
 <script>
 (function () {
-
-  // ── FALLBACK DATA ──────────────────────────────────────
-  // Hardcoded major Indian states + cities.
-  // Used instantly if CDN is unreachable or times out.
-  const FALLBACK = {
-    states: [
-      { name:"Andaman and Nicobar",    isoCode:"AN" },
-      { name:"Andhra Pradesh",         isoCode:"AP" },
-      { name:"Arunachal Pradesh",      isoCode:"AR" },
-      { name:"Assam",                  isoCode:"AS" },
-      { name:"Bihar",                  isoCode:"BR" },
-      { name:"Chandigarh",             isoCode:"CH" },
-      { name:"Chhattisgarh",           isoCode:"CG" },
-      { name:"Dadra and Nagar Haveli", isoCode:"DN" },
-      { name:"Daman and Diu",          isoCode:"DD" },
-      { name:"Delhi",                  isoCode:"DL" },
-      { name:"Goa",                    isoCode:"GA" },
-      { name:"Gujarat",                isoCode:"GJ" },
-      { name:"Haryana",                isoCode:"HR" },
-      { name:"Himachal Pradesh",       isoCode:"HP" },
-      { name:"Jammu and Kashmir",      isoCode:"JK" },
-      { name:"Jharkhand",              isoCode:"JH" },
-      { name:"Karnataka",              isoCode:"KA" },
-      { name:"Kerala",                 isoCode:"KL" },
-      { name:"Ladakh",                 isoCode:"LA" },
-      { name:"Lakshadweep",            isoCode:"LD" },
-      { name:"Madhya Pradesh",         isoCode:"MP" },
-      { name:"Maharashtra",            isoCode:"MH" },
-      { name:"Manipur",                isoCode:"MN" },
-      { name:"Meghalaya",              isoCode:"ML" },
-      { name:"Mizoram",                isoCode:"MZ" },
-      { name:"Nagaland",               isoCode:"NL" },
-      { name:"Odisha",                 isoCode:"OR" },
-      { name:"Puducherry",             isoCode:"PY" },
-      { name:"Punjab",                 isoCode:"PB" },
-      { name:"Rajasthan",              isoCode:"RJ" },
-      { name:"Sikkim",                 isoCode:"SK" },
-      { name:"Tamil Nadu",             isoCode:"TN" },
-      { name:"Telangana",              isoCode:"TG" },
-      { name:"Tripura",                isoCode:"TR" },
-      { name:"Uttar Pradesh",          isoCode:"UP" },
-      { name:"Uttarakhand",            isoCode:"UT" },
-      { name:"West Bengal",            isoCode:"WB" },
-    ],
-    cities: {
-      AN: ["Port Blair","Diglipur","Mayabunder","Car Nicobar"],
-      AP: ["Visakhapatnam","Vijayawada","Guntur","Nellore","Kurnool","Kakinada","Tirupati","Rajahmundry","Kadapa","Anantapur","Vizianagaram","Eluru"],
-      AR: ["Itanagar","Naharlagun","Pasighat","Tawang","Ziro","Bomdila"],
-      AS: ["Guwahati","Silchar","Dibrugarh","Jorhat","Nagaon","Tinsukia","Tezpur","Bongaigaon","Dhubri","Goalpara","Lakhimpur","Karimganj"],
-      BR: ["Patna","Gaya","Bhagalpur","Muzaffarpur","Darbhanga","Purnia","Ara","Bihar Sharif","Begusarai","Katihar","Munger","Chapra","Hajipur","Samastipur"],
-      CH: ["Chandigarh"],
-      CG: ["Raipur","Bhilai","Bilaspur","Korba","Durg","Rajnandgaon","Jagdalpur","Ambikapur","Raigarh","Chirmiri","Dhamtari","Mahasamund"],
-      DN: ["Silvassa","Amli","Dadra"],
-      DD: ["Daman","Diu"],
-      DL: ["New Delhi","Dwarka","Rohini","Saket","Karol Bagh","Lajpat Nagar","Janakpuri","Pitampura","Shahdara","Vasant Kunj","Mayur Vihar","Preet Vihar"],
-      GA: ["Panaji","Margao","Vasco da Gama","Mapusa","Ponda","Bicholim","Valpoi","Sanquelim","Canacona","Pernem"],
-      GJ: ["Ahmedabad","Surat","Vadodara","Rajkot","Bhavnagar","Jamnagar","Junagadh","Gandhinagar","Anand","Mehsana","Morbi","Nadiad","Bharuch","Navsari","Amreli","Botad"],
-      HR: ["Gurugram","Faridabad","Panipat","Ambala","Yamunanagar","Rohtak","Hisar","Karnal","Sonipat","Panchkula","Rewari","Bhiwani","Sirsa","Bahadurgarh"],
-      HP: ["Shimla","Dharamshala","Solan","Mandi","Kullu","Hamirpur","Bilaspur","Chamba","Una","Nahan","Palampur","Baddi"],
-      JK: ["Srinagar","Jammu","Anantnag","Sopore","Baramulla","Kathua","Udhampur","Punch","Rajouri","Leh"],
-      JH: ["Ranchi","Jamshedpur","Dhanbad","Bokaro","Deoghar","Hazaribagh","Giridih","Ramgarh","Medininagar","Chaibasa","Dumka","Phusro"],
-      KA: ["Bengaluru","Mysuru","Hubli","Mangaluru","Belagavi","Kalaburagi","Davanagere","Ballari","Vijayapura","Shivamogga","Tumakuru","Bidar","Udupi","Mandya","Hassan","Raichur"],
-      KL: ["Thiruvananthapuram","Kochi","Kozhikode","Thrissur","Kollam","Palakkad","Alappuzha","Malappuram","Kannur","Kottayam","Pathanamthitta","Idukki","Kasaragod","Wayanad"],
-      LA: ["Leh","Kargil"],
-      LD: ["Kavaratti","Agatti","Minicoy"],
-      MP: ["Bhopal","Indore","Jabalpur","Gwalior","Ujjain","Sagar","Dewas","Satna","Ratlam","Rewa","Murwara","Singrauli","Chhindwara","Burhanpur","Khandwa"],
-      MH: ["Mumbai","Pune","Nagpur","Thane","Nashik","Aurangabad","Solapur","Kolhapur","Amravati","Nanded","Sangli","Jalgaon","Akola","Latur","Dhule","Ahmednagar","Chandrapur","Parbhani"],
-      MN: ["Imphal","Thoubal","Kakching","Senapati","Churachandpur","Bishnupur"],
-      ML: ["Shillong","Tura","Jowai","Nongstoin","Williamnagar"],
-      MZ: ["Aizawl","Lunglei","Saiha","Champhai","Kolasib"],
-      NL: ["Kohima","Dimapur","Mokokchung","Tuensang","Wokha","Zunheboto"],
-      OR: ["Bhubaneswar","Cuttack","Rourkela","Brahmapur","Sambalpur","Puri","Balasore","Bhadrak","Baripada","Jharsuguda","Angul","Dhenkanal","Koraput","Kendujhar"],
-      PY: ["Puducherry","Karaikal","Mahe","Yanam"],
-      PB: ["Ludhiana","Amritsar","Jalandhar","Patiala","Bathinda","Mohali","Firozpur","Hoshiarpur","Gurdaspur","Moga","Pathankot","Sangrur","Barnala","Fatehgarh Sahib"],
-      RJ: ["Jaipur","Jodhpur","Kota","Bikaner","Ajmer","Udaipur","Bhilwara","Alwar","Bharatpur","Sikar","Pali","Sri Ganganagar","Barmer","Churu","Jhunjhunu","Nagaur","Tonk"],
-      SK: ["Gangtok","Namchi","Gyalshing","Mangan","Rangpo"],
-      TN: ["Chennai","Coimbatore","Madurai","Tiruchirappalli","Salem","Tirunelveli","Tiruppur","Erode","Vellore","Thoothukudi","Dindigul","Thanjavur","Kanchipuram","Nagercoil","Kumbakonam","Hosur"],
-      TG: ["Hyderabad","Warangal","Nizamabad","Karimnagar","Khammam","Ramagundam","Secunderabad","Mahbubnagar","Nalgonda","Adilabad","Suryapet","Siddipet"],
-      TR: ["Agartala","Dharmanagar","Udaipur","Kailasahar","Belonia","Ambassa"],
-      UP: ["Lucknow","Kanpur","Agra","Varanasi","Meerut","Allahabad (Prayagraj)","Ghaziabad","Noida","Bareilly","Aligarh","Moradabad","Saharanpur","Gorakhpur","Firozabad","Mathura","Muzaffarnagar","Shahjahanpur","Jhansi","Rampur","Hapur"],
-      UT: ["Dehradun","Haridwar","Roorkee","Haldwani","Rudrapur","Kashipur","Rishikesh","Pithoragarh","Almora","Mussoorie","Kotdwar","Ramnagar"],
-      WB: ["Kolkata","Asansol","Siliguri","Durgapur","Bardhaman","Malda","Baharampur","Habra","Kharagpur","Shantipur","Jalpaiguri","Haldia","Darjeeling","Cooch Behar","Krishnanagar","Raiganj"],
-    }
-  };
-
-  // ── Internal state ──────────────────────────────────────
-  const loc = {
-    states:         [],
-    cities:         [],
-    selectedState:  null,
-    selectedCity:   null,
-    openDrop:       null,
-    _citiesByState: {},
-    usingFallback:  false,
-  };
-
-  const CDN_BASE    = 'https://cdn.jsdelivr.net/npm/country-state-city@3.2.1/dist/lib';
-  const CDN_TIMEOUT = 5000; // ms — treat as offline after this
-
-  // ── Fetch with hard timeout ─────────────────────────────
-  function fetchWithTimeout(url, ms) {
-    return new Promise((resolve, reject) => {
-      const id = setTimeout(() => reject(new Error('timeout')), ms);
-      fetch(url)
-        .then(r => { clearTimeout(id); resolve(r); })
-        .catch(e => { clearTimeout(id); reject(e); });
-    });
-  }
-
-  // ── Boot ────────────────────────────────────────────────
-  async function init() {
-    // Show loading immediately so dropdown feels responsive
-    document.getElementById('state-list').innerHTML =
-      '<li class="loc-loading">Loading states…</li>';
-
-    try {
-      const [statesRes, citiesRes] = await Promise.all([
-        fetchWithTimeout(`${CDN_BASE}/state.json`, CDN_TIMEOUT),
-        fetchWithTimeout(`${CDN_BASE}/city.json`,  CDN_TIMEOUT),
-      ]);
-
-      const allStates = await statesRes.json();
-      const allCities = await citiesRes.json();
-
-      loc.states = allStates
-        .filter(s => s.countryCode === 'IN')
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      allCities.forEach(c => {
-        const name        = Array.isArray(c) ? c[0] : c.name;
-        const stateCode   = Array.isArray(c) ? c[1] : c.stateCode;
-        const countryCode = Array.isArray(c) ? c[2] : c.countryCode;
-        if (countryCode !== 'IN') return;
-        if (!loc._citiesByState[stateCode]) loc._citiesByState[stateCode] = [];
-        loc._citiesByState[stateCode].push(name);
-      });
-
-      loc.usingFallback = false;
-
-    } catch (err) {
-      // CDN failed or timed out — use built-in fallback silently
-      console.warn('[Location] CDN unavailable, offline fallback active.', err.message);
-      loc.states         = FALLBACK.states; // already sorted above
-      loc._citiesByState = FALLBACK.cities;
-      loc.usingFallback  = true;
-      document.getElementById('state-offline-badge').classList.add('visible');
-    }
-
-    renderStateList();
-  }
-
-  // ── Render ──────────────────────────────────────────────
-  function renderStateList() {
-    const list = document.getElementById('state-list');
-    list.innerHTML = loc.states.length
-      ? loc.states.map(s => stateItem(s)).join('')
-      : '<li class="loc-empty">No states found</li>';
-  }
-
-  function esc(s) { return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-
-  function stateItem(s) {
-    const active = loc.selectedState?.isoCode === s.isoCode ? ' class="active"' : '';
-    return `<li${active} onclick="window._locPickState('${esc(s.isoCode)}','${esc(s.name)}')">${s.name}</li>`;
-  }
-
-  function cityItem(name) {
-    const active = loc.selectedCity === name ? ' class="active"' : '';
-    return `<li${active} onclick="window._locPickCity('${esc(name)}')">${name}</li>`;
-  }
-
-  // ── Pick state ──────────────────────────────────────────
-  window._locPickState = function (isoCode, name) {
-    loc.selectedState = { isoCode, name };
-    loc.selectedCity  = null;
-
-    document.getElementById('state-value').textContent = name;
-    const st = document.getElementById('state-trigger');
-    st.classList.add('selected');
-    st.classList.remove('invalid');
-
-    const cities = (loc._citiesByState[isoCode] || []).slice().sort();
-    loc.cities = cities;
-
-    // Show/hide offline badge on city drop
-    document.getElementById('city-offline-badge')
-      .classList.toggle('visible', loc.usingFallback);
-
-    // Reset & populate city list
-    document.getElementById('city-search').value = '';
-    document.getElementById('city-list').innerHTML = cities.length
-      ? cities.map(c => cityItem(c)).join('')
-      : '<li class="loc-empty">No cities found for this state</li>';
-
-    document.getElementById('city-value').textContent = 'Select City';
-    document.getElementById('city-hidden').value = '';
-
-    const ct = document.getElementById('city-trigger');
-    ct.classList.remove('selected', 'disabled', 'invalid');
-
-    // Refresh state checkmarks
-    document.querySelectorAll('#state-list li').forEach(li => {
-      li.classList.toggle('active', li.textContent.trim() === name);
-    });
-
-    _closeDrop('state');
-    setTimeout(() => _openDrop('city'), 180);
-  };
-
-  // ── Pick city ───────────────────────────────────────────
-  window._locPickCity = function (name) {
-    loc.selectedCity = name;
-    document.getElementById('city-value').textContent = name;
-    document.getElementById('city-hidden').value = name;
-
-    const ct = document.getElementById('city-trigger');
-    ct.classList.add('selected');
-    ct.classList.remove('invalid');
-
-    document.querySelectorAll('#city-list li').forEach(li => {
-      li.classList.toggle('active', li.textContent.trim() === name);
-    });
-
-    _closeDrop('city');
-  };
-
-  // ── Toggle / open / close ───────────────────────────────
-  window.toggleDrop = function (which) {
-    if (loc.openDrop === which) { _closeDrop(which); return; }
-    if (loc.openDrop) _closeDrop(loc.openDrop);
-    _openDrop(which);
-  };
-
-  function _openDrop(which) {
-    loc.openDrop = which;
-    document.getElementById(`${which}-drop`).classList.add('open');
-    document.getElementById(`${which}-trigger`).classList.add('open');
-    setTimeout(() => { document.getElementById(`${which}-search`)?.focus(); }, 50);
-  }
-
-  function _closeDrop(which) {
-    if (loc.openDrop === which) loc.openDrop = null;
-    document.getElementById(`${which}-drop`).classList.remove('open');
-    document.getElementById(`${which}-trigger`).classList.remove('open');
-    const s = document.getElementById(`${which}-search`);
-    if (s && s.value) { s.value = ''; filterList(which); }
-  }
-
-  // ── Filter ──────────────────────────────────────────────
-  window.filterList = function (which) {
-    const q = document.getElementById(`${which}-search`).value.toLowerCase().trim();
-    if (which === 'state') {
-      const filtered = q ? loc.states.filter(s => s.name.toLowerCase().includes(q)) : loc.states;
-      document.getElementById('state-list').innerHTML = filtered.length
-        ? filtered.map(s => stateItem(s)).join('')
-        : '<li class="loc-empty">No match</li>';
-    } else {
-      const filtered = q ? loc.cities.filter(c => c.toLowerCase().includes(q)) : loc.cities;
-      document.getElementById('city-list').innerHTML = filtered.length
-        ? filtered.map(c => cityItem(c)).join('')
-        : '<li class="loc-empty">No match</li>';
-    }
-  };
-
-  // ── Reset on form Clear ─────────────────────────────────
-  window.resetLocation = function () {
-    loc.selectedState = null;
-    loc.selectedCity  = null;
-    if (loc.openDrop) _closeDrop(loc.openDrop);
-
-    document.getElementById('state-value').textContent = 'Select State';
-    document.getElementById('city-value').textContent  = 'Select City';
-    document.getElementById('city-hidden').value = '';
-
-    const st = document.getElementById('state-trigger');
-    const ct = document.getElementById('city-trigger');
-    st.classList.remove('selected', 'open', 'invalid');
-    ct.classList.remove('selected', 'open', 'invalid');
-    ct.classList.add('disabled');
-
-    renderStateList();
-    document.getElementById('city-list').innerHTML =
-      '<li class="loc-placeholder">← Choose a state first</li>';
-  };
-
-  // ── Global events ───────────────────────────────────────
-  document.addEventListener('click', e => {
-    if (!e.target.closest('#loc-wrapper') && loc.openDrop) _closeDrop(loc.openDrop);
+  const picker = window.initLocationPicker({
+    namespace:         'loc',
+    stateTriggerId:    'state-trigger',
+    stateValueId:      'state-value',
+    stateDropId:       'state-drop',
+    stateSearchId:     'state-search',
+    stateListId:       'state-list',
+    stateOfflineBadge: 'state-offline-badge',
+    cityTriggerId:     'city-trigger',
+    cityValueId:       'city-value',
+    cityDropId:        'city-drop',
+    citySearchId:      'city-search',
+    cityListId:        'city-list',
+    cityOfflineBadge:  'city-offline-badge',
+    cityHiddenId:      'city-hidden',
+    wrapperSelector:   '#loc-wrapper',
   });
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && loc.openDrop) _closeDrop(loc.openDrop);
-  });
-
-  // Form validation — capture phase so it fires before submit handler
-  const form = document.getElementById('inq-form');
-  if (form) {
-    form.addEventListener('submit', e => {
-      if (!document.getElementById('city-hidden').value) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        document.getElementById('state-trigger').classList.add('invalid');
-        document.getElementById('city-trigger').classList.add('invalid');
-        if (typeof showToast === 'function') showToast('Please select your state and city', 'error');
-        document.getElementById('loc-wrapper').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, true);
-  }
-
-  init();
-
+  // expose reset for clearInquiryForm()
+  window.resetLocation = () => picker.reset();
 })();
 </script>
-
+<script src="/frontend/theme-toggle.js"></script>
 </body>
 </html>

@@ -21,7 +21,7 @@ async def create_inquiry(
     email: str = Form(...),
     category: str = Form(...),
     details: str = Form(...),
-    city: str = Form(...),
+    city: str = Form(None),        # optional — buyer may not select
     company_name: str = Form(None),
     budget: str = Form(None),
     brand: str = Form(None),
@@ -33,9 +33,9 @@ async def create_inquiry(
     try:
         file_path = None
 
-        # SAFE FILE UPLOAD
-        if file:
-            ext = file.filename.split(".")[-1] if "." in file.filename else "dat"
+        # SAFE FILE UPLOAD — guard empty filename
+        if file and file.filename:
+            ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "dat"
             unique_name = f"{uuid.uuid4()}.{ext}"
             file_location = os.path.join(UPLOAD_DIR, unique_name)
 
@@ -145,7 +145,7 @@ def all_inquiries():
     db = SessionLocal()
 
     try:
-        inquiries = db.query(Inquiry).all()
+        inquiries = db.query(Inquiry).filter(Inquiry.is_closed == False).all()
 
         result = []
 
@@ -279,4 +279,3 @@ def delete_inquiry(inquiry_id: int, buyer_id: int):
 
     finally:
         db.close()
-
