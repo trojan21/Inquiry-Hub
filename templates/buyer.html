@@ -26,9 +26,8 @@
   width: 100%; max-width: 500px;
   margin: auto 0;
   box-shadow: 0 20px 60px rgba(15,17,23,0.15);
-  position: relative; overflow: visible;
+  position: relative;
 }
-.profile-card::before { display: none; }
 
 .profile-badge {
   display: inline-flex; align-items: center; gap: 8px;
@@ -91,7 +90,6 @@
   display: flex; align-items: center; gap: 14px;
   margin-bottom: 0;
 }
-.profile-banner::before { display: none; }
 .pb-avatar {
   width: 44px; height: 44px; border-radius: 12px;
   background: linear-gradient(135deg, #4f46e5, #2563eb);
@@ -290,7 +288,6 @@ select.form-input option { background: #fff; color: #0f1117; }
 
 /* ── LOCATION DROPDOWN ───────────────────────────────── */
 .loc-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; }
-@media (max-width: 540px) { .loc-wrapper { grid-template-columns: 1fr; } }
 .loc-field { position: relative; }
 .loc-trigger {
   display: flex; align-items: center; gap: 10px;
@@ -305,7 +302,6 @@ select.form-input option { background: #fff; color: #0f1117; }
 .loc-trigger.open    { border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); color: #0f1117; }
 .loc-trigger.selected{ color: #0f1117; border-color: rgba(79,70,229,0.4); background: #fff; }
 .loc-trigger.disabled{ opacity: 0.45; cursor: not-allowed; pointer-events: none; }
-.loc-trigger.invalid { border-color: rgba(220,38,38,0.5) !important; box-shadow: 0 0 0 3px rgba(220,38,38,0.1) !important; }
 .loc-icon  { font-size: 15px; flex-shrink: 0; }
 .loc-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-arrow { font-size: 11px; color: #9ca3af; transition: transform 0.18s; flex-shrink: 0; }
@@ -396,7 +392,7 @@ input:-webkit-autofill:active {
 <body>
 
 <!-- ── PROFILE SETUP OVERLAY ────────────────────────── -->
-<div class="profile-overlay" id="profile-overlay">
+<div class="profile-overlay hidden" id="profile-overlay">
   <div class="profile-card">
     <div class="profile-badge">One-time Setup</div>
     <h2>Complete Your Profile</h2>
@@ -446,7 +442,7 @@ input:-webkit-autofill:active {
       <span class="sidebar-section">Main</span>
       <a class="active" onclick="switchTab('overview')" data-tab="overview"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Overview</a>
       <a onclick="switchTab('create')" data-tab="create"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span> New Inquiry</a>
-      <a onclick="switchTab('my')" data-tab="my"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></span> My Inquiries <span class="nav-dot" id="nav-dot-my" style="display:none;"></span></a>
+      <a onclick="switchTab('my')" data-tab="my"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></span> My Inquiries</a>
       <a onclick="switchTab('quotes')" data-tab="quotes"><span class="nav-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span> Received Quotes</a>
 
       <span class="sidebar-section">Account</span>
@@ -466,8 +462,6 @@ input:-webkit-autofill:active {
 
   <!-- MAIN -->
   <div class="main">
-
-    <!-- TOPBAR -->
     <div class="topbar">
       <div class="topbar-left">
         <h1 id="page-title">Buyer Dashboard</h1>
@@ -486,8 +480,6 @@ input:-webkit-autofill:active {
 
       <!-- ── OVERVIEW TAB ─────────────────────────── -->
       <div id="tab-overview" class="tab-panel">
-
-        <!-- Profile Banner -->
         <div class="profile-banner" style="margin-bottom:20px;">
           <div class="pb-avatar" id="pb-avatar">B</div>
           <div class="pb-info">
@@ -500,7 +492,6 @@ input:-webkit-autofill:active {
           <button class="pb-edit" onclick="editProfile()">✏ Edit Profile</button>
         </div>
 
-        <!-- Stats -->
         <div class="stats-slim">
           <div class="stat-slim">
             <div class="stat-slim-icon si-blue"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
@@ -520,7 +511,6 @@ input:-webkit-autofill:active {
           </div>
         </div>
 
-        <!-- Recent -->
         <div class="panel">
           <div class="panel-h">
             <h2>Recent Inquiries</h2>
@@ -529,7 +519,6 @@ input:-webkit-autofill:active {
           <div id="recent-list"></div>
         </div>
 
-        <!-- Recent Quotes -->
         <div class="panel" style="margin-top:16px;">
           <div class="panel-h">
             <h2>Latest Quotes</h2>
@@ -537,7 +526,6 @@ input:-webkit-autofill:active {
           </div>
           <div id="recent-quotes"></div>
         </div>
-
       </div>
 
       <!-- ── CREATE INQUIRY TAB ───────────────────── -->
@@ -548,14 +536,12 @@ input:-webkit-autofill:active {
             <span class="panel-sub">Your profile details are auto-filled</span>
           </div>
 
-          <!-- Category Chips -->
           <label class="form-label">Category <span class="req">*required</span></label>
           <div class="cat-grid" id="cat-chips"></div>
           <input type="hidden" id="inq-category">
           <div class="cat-error" id="cat-error">⚠ Please select a category</div>
           <div style="height:14px;"></div>
 
-          <!-- Form Grid -->
           <div class="inq-form-grid">
             <div class="span-2">
               <label class="form-label">Details / Requirement <span class="req">*required</span></label>
@@ -575,12 +561,9 @@ input:-webkit-autofill:active {
               <input class="form-input" id="inq-brand" autocomplete="off" placeholder="e.g. Samsung, L&T, Generic">
             </div>
 
-            <!-- ── State + City Dropdown ── -->
             <div class="span-2">
               <label class="form-label">Location</label>
               <div class="loc-wrapper" id="loc-wrapper">
-
-                <!-- STATE -->
                 <div class="loc-field" id="state-field">
                   <div class="loc-trigger" id="state-trigger" onclick="_locToggle('state')">
                     <span class="loc-icon">🗺️</span>
@@ -593,13 +576,9 @@ input:-webkit-autofill:active {
                       <input class="loc-search" id="state-search" placeholder="Search state…"
                              oninput="_locFilterList('state')" autocomplete="off">
                     </div>
-                    <ul class="loc-list" id="state-list">
-                      <li class="loc-loading">Loading states…</li>
-                    </ul>
+                    <ul class="loc-list" id="state-list"><li class="loc-loading">Loading states…</li></ul>
                   </div>
                 </div>
-
-                <!-- CITY -->
                 <div class="loc-field" id="city-field">
                   <div class="loc-trigger disabled" id="city-trigger" onclick="_locToggle('city')">
                     <span class="loc-icon">🏙️</span>
@@ -612,17 +591,12 @@ input:-webkit-autofill:active {
                       <input class="loc-search" id="city-search" placeholder="Search city…"
                              oninput="_locFilterList('city')" autocomplete="off">
                     </div>
-                    <ul class="loc-list" id="city-list">
-                      <li class="loc-placeholder">← Choose a state first</li>
-                    </ul>
+                    <ul class="loc-list" id="city-list"><li class="loc-placeholder">← Choose a state first</li></ul>
                   </div>
                 </div>
-
-                <!-- Hidden field submitted with form -->
                 <input type="hidden" id="city-hidden">
               </div>
             </div>
-            <!-- ── End Location Dropdown ── -->
 
             <div class="span-2">
               <label class="form-label">Attachment (optional)</label>
@@ -635,12 +609,11 @@ input:-webkit-autofill:active {
             </div>
           </div>
 
-          <!-- Profile prefill notice -->
-          <div style="background:rgba(0,229,122,0.05);border:1px solid rgba(0,229,122,0.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+          <div style="background:rgba(5,150,105,0.05);border:1px solid rgba(5,150,105,0.15);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
             <span style="font-size:18px;">✅</span>
             <div>
-              <div style="font-size:12.5px;font-weight:600;color:#00e57a;margin-bottom:2px;">Profile auto-filled</div>
-              <div style="font-size:11.5px;color:#4e5f82;">Name, mobile, email, company & profile link from your saved profile</div>
+              <div style="font-size:12.5px;font-weight:600;color:#059669;margin-bottom:2px;">Profile auto-filled</div>
+              <div style="font-size:11.5px;color:#6b7280;">Name, mobile, email, company & profile link from your saved profile</div>
             </div>
           </div>
 
@@ -680,36 +653,40 @@ input:-webkit-autofill:active {
 <div id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════════════
-   GUARD
-══════════════════════════════════════════════ */
+/* ── GUARD ── */
 if (localStorage.getItem("role") !== "buyer") {
   localStorage.clear();
   window.location.href = "/login?role=buyer";
 }
 
-const buyerId  = localStorage.getItem("user_id");
+const buyerId   = localStorage.getItem("user_id");
 const userEmail = localStorage.getItem("email") || "";
 
-/* ══════════════════════════════════════════════
-   PROFILE SYSTEM
-══════════════════════════════════════════════ */
+/* ── NAME HELPER: "rohan gupta" → "Rohan Gupta" ── */
+function toTitleCase(str) {
+  return str.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+/* ── PROFILE — keyed by userId so multiple users on same browser work ── */
+function profileKey() { return `buyer_profile_${buyerId}`; }
+
 function getProfile() {
-  const raw = localStorage.getItem("buyer_profile");
+  const raw = localStorage.getItem(profileKey());
   return raw ? JSON.parse(raw) : null;
 }
 
 function saveProfile() {
-  const name    = document.getElementById("pf-name").value.trim();
+  const rawName = document.getElementById("pf-name").value.trim();
+  const name    = toTitleCase(rawName);
   const mobile  = document.getElementById("pf-mobile").value.trim();
   const email   = document.getElementById("pf-email").value.trim() || userEmail;
-  const company = document.getElementById("pf-company").value.trim();
+  const company = toTitleCase(document.getElementById("pf-company").value.trim());
   const link    = document.getElementById("pf-link").value.trim();
 
   if (!name) { showToast("Please enter your name", "error"); return; }
 
   const profile = { name, mobile, email, company, link };
-  localStorage.setItem("buyer_profile", JSON.stringify(profile));
+  localStorage.setItem(profileKey(), JSON.stringify(profile));
   localStorage.setItem("username", name);
 
   document.getElementById("profile-overlay").classList.add("hidden");
@@ -725,35 +702,43 @@ function applyProfile(p) {
   document.getElementById("pb-avatar").innerText      = initial;
   document.getElementById("pb-name").innerText        = p.name;
   document.getElementById("pb-company").innerText     = p.company ? "🏢 " + p.company : "";
-  document.getElementById("pb-mobile").innerText      = p.mobile ? "📱 " + p.mobile : "";
+  document.getElementById("pb-mobile").innerText      = p.mobile  ? "📱 " + p.mobile  : "";
 }
 
 function editProfile() {
   const p = getProfile();
   if (p) {
-    document.getElementById("pf-name").value    = p.name || "";
-    document.getElementById("pf-mobile").value  = p.mobile || "";
-    document.getElementById("pf-email").value   = p.email || userEmail;
+    document.getElementById("pf-name").value    = p.name    || "";
+    document.getElementById("pf-mobile").value  = p.mobile  || "";
+    document.getElementById("pf-email").value   = p.email   || userEmail;
     document.getElementById("pf-company").value = p.company || "";
-    document.getElementById("pf-link").value    = p.link || "";
+    document.getElementById("pf-link").value    = p.link    || "";
   }
   document.getElementById("profile-overlay").classList.remove("hidden");
 }
 
-/* ══════════════════════════════════════════════
-   BOOT
-══════════════════════════════════════════════ */
+/* ── LOGOUT — preserve profiles ── */
+function logout() {
+  const keep = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k.startsWith("buyer_profile_") || k.startsWith("seller_profile_")) keep[k] = localStorage.getItem(k);
+  }
+  localStorage.clear();
+  Object.entries(keep).forEach(([k,v]) => localStorage.setItem(k, v));
+  window.location.href = "/login?role=buyer";
+}
+
+/* ── BOOT ── */
 document.getElementById("topbar-date").innerText =
   new Date().toLocaleDateString("en-IN", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
 
 window.addEventListener("DOMContentLoaded", () => {
   const profile = getProfile();
   if (!profile) {
-    // Pre-fill email from localStorage if available
     document.getElementById("pf-email").value = userEmail;
     document.getElementById("profile-overlay").classList.remove("hidden");
   } else {
-    document.getElementById("profile-overlay").classList.add("hidden");
     applyProfile(profile);
   }
   buildCategoryChips();
@@ -761,42 +746,26 @@ window.addEventListener("DOMContentLoaded", () => {
   loadQuotes();
 });
 
-/* ══════════════════════════════════════════════
-   TAB NAVIGATION — with active sidebar highlight
-══════════════════════════════════════════════ */
-const tabs = ["overview", "create", "my", "quotes"];
+/* ── TAB NAVIGATION ── */
+const tabs = ["overview","create","my","quotes"];
 function switchTab(name) {
-  tabs.forEach(t => {
-    document.getElementById("tab-" + t).style.display = (t === name) ? "" : "none";
-  });
-  // update sidebar active state
+  tabs.forEach(t => { document.getElementById("tab-"+t).style.display = (t===name) ? "" : "none"; });
   document.querySelectorAll("#sidebar-nav a[data-tab]").forEach(a => {
     a.classList.toggle("active", a.dataset.tab === name);
   });
-  const titles = {
-    overview: "Buyer Dashboard",
-    create:   "New Inquiry",
-    my:       "My Inquiries",
-    quotes:   "Received Quotes"
-  };
+  const titles = { overview:"Buyer Dashboard", create:"New Inquiry", my:"My Inquiries", quotes:"Received Quotes" };
   document.getElementById("page-title").innerText = titles[name] || "Dashboard";
-  if (name === "my")     loadMy();
-  if (name === "quotes") loadQuotes();
+  if (name==="my")     loadMy();
+  if (name==="quotes") loadQuotes();
 }
 
-/* ══════════════════════════════════════════════
-   CATEGORY CHIPS
-══════════════════════════════════════════════ */
-const CATEGORIES = [
-  "Electronics","Furniture","Textiles","Food & Beverage",
-  "Industrial","IT Services","Marketing","Logistics",
-  "Construction","Healthcare","Automotive","Other"
-];
+/* ── CATEGORY CHIPS ── */
+const CATEGORIES = ["Electronics","Furniture","Textiles","Food & Beverage","Industrial","IT Services","Marketing","Logistics","Construction","Healthcare","Automotive","Other"];
 
 function buildCategoryChips() {
-  document.getElementById("cat-chips").innerHTML = CATEGORIES.map(c => `
-    <div class="cat-chip" onclick="selectCat(this,'${c}')">${c}</div>
-  `).join("");
+  document.getElementById("cat-chips").innerHTML = CATEGORIES.map(c =>
+    `<div class="cat-chip" onclick="selectCat(this,'${c}')">${c}</div>`
+  ).join("");
 }
 
 function selectCat(el, cat) {
@@ -806,293 +775,173 @@ function selectCat(el, cat) {
 }
 
 function updateFileLabel(input) {
-  const lbl = document.getElementById("file-name-label");
-  lbl.innerText = input.files[0] ? "📎 " + input.files[0].name : "";
+  document.getElementById("file-name-label").innerText = input.files[0] ? "📎 "+input.files[0].name : "";
 }
 
-/* ══════════════════════════════════════════════
-   DATA LOADERS
-══════════════════════════════════════════════ */
+/* ── DATA LOADERS ── */
 async function loadMy() {
   const el = document.getElementById("my-list");
   el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
   try {
     const res  = await fetch(`/inquiries/my/${buyerId}`);
     const data = res.ok ? await res.json() : [];
-
     document.getElementById("stat-total").innerText  = data.length;
     document.getElementById("stat-open").innerText   = data.filter(i => i.days_left > 0).length;
     document.getElementById("stat-closed").innerText = data.filter(i => i.days_left === 0).length;
-
     renderRecent(data.slice(0,3));
-
-    if (!data.length) {
-      el.innerHTML = `<div class="empty-box">
-        <div class="empty-icon">📭</div>
-        <h3>No inquiries yet</h3>
-        <p>Post your first requirement to get quotes from sellers.</p>
-      </div>`;
-      return;
-    }
-
+    if (!data.length) { el.innerHTML=`<div class="empty-box"><div class="empty-icon">📭</div><h3>No inquiries yet</h3><p>Post your first requirement to get quotes from sellers.</p></div>`; return; }
     el.innerHTML = data.map(i => inquiryCard(i)).join("");
-  } catch {
-    el.innerHTML = `<div class="empty-box"><div class="empty-icon">⚠️</div><h3>Couldn't load inquiries</h3></div>`;
-  }
+  } catch { el.innerHTML=`<div class="empty-box"><div class="empty-icon">⚠️</div><h3>Couldn't load inquiries</h3></div>`; }
 }
 
 function inquiryCard(i) {
   const icons = {Electronics:"⚡",Furniture:"🪑",Textiles:"🧵","Food & Beverage":"🍽️",Industrial:"🏭","IT Services":"💻",Marketing:"📣",Logistics:"🚚",Construction:"🏗️",Healthcare:"🏥",Automotive:"🚗",Other:"📦"};
-  const icon  = icons[i.category] || "📦";
-  return `
-    <div class="inq-card-enhanced">
-      <div class="inq-cat-icon">${icon}</div>
-      <div class="inq-meta">
-        <h4>${i.category}</h4>
-        <p>${(i.details || "").slice(0, 60)}…</p>
-      </div>
-      <div class="inq-card-actions">
-        <span class="inq-budget">₹${i.budget ? Number(i.budget).toLocaleString("en-IN") : "—"}</span>
-        <span class="inq-days">${i.days_left}d left</span>
-        <button class="btn-ghost" style="padding:5px 10px;font-size:11px;"
-          onclick="deleteInquiry(${i.id})">🗑</button>
-      </div>
-    </div>`;
+  return `<div class="inq-card-enhanced">
+    <div class="inq-cat-icon">${icons[i.category]||"📦"}</div>
+    <div class="inq-meta"><h4>${i.category}</h4><p>${(i.details||"").slice(0,60)}…</p></div>
+    <div class="inq-card-actions">
+      <span class="inq-budget">₹${i.budget?Number(i.budget).toLocaleString("en-IN"):"—"}</span>
+      <span class="inq-days">${i.days_left}d left</span>
+      <button class="btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="deleteInquiry(${i.id})">🗑</button>
+    </div>
+  </div>`;
 }
 
 function renderRecent(data) {
   const el = document.getElementById("recent-list");
   if (!el) return;
-  if (!data.length) {
-    el.innerHTML = `<div class="empty-box" style="padding:24px;"><div class="empty-icon" style="font-size:28px;">📭</div><p>No inquiries yet</p></div>`;
-    return;
-  }
-  el.innerHTML = data.map(i => inquiryCard(i)).join("");
+  el.innerHTML = data.length ? data.map(i=>inquiryCard(i)).join("") :
+    `<div class="empty-box" style="padding:24px;"><div class="empty-icon" style="font-size:28px;">📭</div><p>No inquiries yet</p></div>`;
 }
 
 async function loadQuotes() {
-  const el  = document.getElementById("quote-list");
-  const rel = document.getElementById("recent-quotes");
-  el.innerHTML = `<div class="loader-wrap"><div class="loader"></div></div>`;
+  const el=document.getElementById("quote-list"), rel=document.getElementById("recent-quotes");
+  el.innerHTML=`<div class="loader-wrap"><div class="loader"></div></div>`;
   try {
-    const res  = await fetch(`/quotes/buyer/${buyerId}`);
-    const data = res.ok ? await res.json() : [];
-    document.getElementById("stat-quotes").innerText = data.length;
-
-    if (rel) {
-      rel.innerHTML = data.slice(0,2).map(q => quoteCard(q)).join("") ||
-        `<div class="empty-box" style="padding:24px;"><div class="empty-icon" style="font-size:28px;">💬</div><p>No quotes yet</p></div>`;
-    }
-
-    if (!data.length) {
-      el.innerHTML = `<div class="empty-box">
-        <div class="empty-icon">💬</div>
-        <h3>No quotes received yet</h3>
-        <p>Sellers will respond to your inquiries with quotes.</p>
-      </div>`;
-      return;
-    }
-    el.innerHTML = data.map(q => quoteCard(q)).join("");
-  } catch {
-    el.innerHTML = `<div class="empty-box"><div class="empty-icon">⚠️</div><h3>Couldn't load quotes</h3></div>`;
-  }
+    const res=await fetch(`/quotes/buyer/${buyerId}`), data=res.ok?await res.json():[];
+    document.getElementById("stat-quotes").innerText=data.length;
+    if (rel) rel.innerHTML=data.slice(0,2).map(q=>quoteCard(q)).join("")||`<div class="empty-box" style="padding:24px;"><div class="empty-icon" style="font-size:28px;">💬</div><p>No quotes yet</p></div>`;
+    el.innerHTML=data.length?data.map(q=>quoteCard(q)).join(""):
+      `<div class="empty-box"><div class="empty-icon">💬</div><h3>No quotes received yet</h3><p>Sellers will respond to your inquiries with quotes.</p></div>`;
+  } catch { el.innerHTML=`<div class="empty-box"><div class="empty-icon">⚠️</div><h3>Couldn't load quotes</h3></div>`; }
 }
 
 function quoteCard(q) {
-  const accepted = q.status === "accepted";
-  const hasContact = q.seller_name || q.seller_mobile || q.seller_email || q.seller_location;
-  return `
-    <div class="quote-card${accepted ? " accepted" : ""}">
-      <div class="quote-top">
-        <div class="quote-price">₹${q.price ? Number(q.price).toLocaleString("en-IN") : "—"}</div>
-        <div class="quote-body">
-          <div class="quote-cat">${q.category || "Inquiry"}</div>
-          <div class="quote-msg">${q.message || "No message provided"}</div>
-        </div>
+  const accepted = q.status==="accepted";
+  const hasContact = q.seller_name||q.seller_mobile||q.seller_email||q.seller_location;
+  return `<div class="quote-card${accepted?" accepted":""}">
+    <div class="quote-top">
+      <div class="quote-price">₹${q.price?Number(q.price).toLocaleString("en-IN"):"—"}</div>
+      <div class="quote-body">
+        <div class="quote-cat">${q.category||"Inquiry"}</div>
+        <div class="quote-msg">${q.message||"No message provided"}</div>
       </div>
-
-      ${hasContact ? `
-      <div class="seller-contact" style="margin-top:12px;">
-        ${q.seller_name     ? `<div class="sc-item"><div class="sc-label">Seller Name</div><div class="sc-val">${q.seller_name}</div></div>` : ""}
-        ${q.seller_company  ? `<div class="sc-item"><div class="sc-label">Company</div><div class="sc-val">${q.seller_company}</div></div>` : ""}
-        ${q.seller_email    ? `<div class="sc-item"><div class="sc-label">Email</div><div class="sc-val">${q.seller_email}</div></div>` : ""}
-        ${q.seller_mobile   ? `<div class="sc-item"><div class="sc-label">Phone</div><div class="sc-val">${q.seller_mobile}</div></div>` : ""}
-        ${q.seller_location ? `<div class="sc-item"><div class="sc-label">Location</div><div class="sc-val">${q.seller_location}</div></div>` : ""}
-      </div>` : ""}
-
-      <div class="quote-actions">
-        ${accepted
-          ? `<span class="accepted-badge">✓ Quote Accepted — contact seller to proceed</span>`
-          : `<button class="btn-accept" onclick="acceptQuote(${q.id}, ${q.inquiry_id})">✓ Accept & Close</button>
-             <button class="btn-reject-q" onclick="rejectQuote(${q.id})">✕ Reject</button>`
-        }
-      </div>
-    </div>`;
+    </div>
+    ${hasContact?`<div class="seller-contact" style="margin-top:12px;">
+      ${q.seller_name?`<div class="sc-item"><div class="sc-label">Seller Name</div><div class="sc-val">${q.seller_name}</div></div>`:""}
+      ${q.seller_company?`<div class="sc-item"><div class="sc-label">Company</div><div class="sc-val">${q.seller_company}</div></div>`:""}
+      ${q.seller_email?`<div class="sc-item"><div class="sc-label">Email</div><div class="sc-val">${q.seller_email}</div></div>`:""}
+      ${q.seller_mobile?`<div class="sc-item"><div class="sc-label">Phone</div><div class="sc-val">${q.seller_mobile}</div></div>`:""}
+      ${q.seller_location?`<div class="sc-item"><div class="sc-label">Location</div><div class="sc-val">${q.seller_location}</div></div>`:""}
+    </div>`:""}
+    <div class="quote-actions">
+      ${accepted?`<span class="accepted-badge">✓ Quote Accepted — contact seller to proceed</span>`:
+      `<button class="btn-accept" onclick="acceptQuote(${q.id},${q.inquiry_id})">✓ Accept & Close</button>
+       <button class="btn-reject-q" onclick="rejectQuote(${q.id})">✕ Reject</button>`}
+    </div>
+  </div>`;
 }
 
-/* ══════════════════════════════════════════════
-   FIELD VALIDATION HELPERS
-══════════════════════════════════════════════ */
-function showErr(inputId, errId) {
-  const el = document.getElementById(inputId);
-  const er = document.getElementById(errId);
-  if (el) el.classList.add("error");
-  if (er) er.classList.add("show");
-}
-function clearErr(inputId, errId) {
-  const el = document.getElementById(inputId);
-  const er = document.getElementById(errId);
-  if (el) el.classList.remove("error");
-  if (er) er.classList.remove("show");
-}
+/* ── VALIDATION ── */
+function showErr(inputId,errId) { document.getElementById(inputId)?.classList.add("error"); document.getElementById(errId)?.classList.add("show"); }
+function clearErr(inputId,errId) { document.getElementById(inputId)?.classList.remove("error"); document.getElementById(errId)?.classList.remove("show"); }
 
-/* ══════════════════════════════════════════════
-   SUBMIT INQUIRY — with full inline validation
-══════════════════════════════════════════════ */
+/* ── SUBMIT INQUIRY ── */
 async function submitInquiry() {
   const profile  = getProfile();
   const category = document.getElementById("inq-category").value;
   const details  = document.getElementById("inq-details").value.trim();
   let   valid    = true;
 
-  // category
-  if (!category) {
-    document.getElementById("cat-error").classList.add("show");
-    document.getElementById("cat-chips").classList.add("error");
-    valid = false;
-  } else {
-    document.getElementById("cat-error").classList.remove("show");
-    document.getElementById("cat-chips").classList.remove("error");
-  }
+  if (!category) { document.getElementById("cat-error").classList.add("show"); document.getElementById("cat-chips").classList.add("error"); valid=false; }
+  else { document.getElementById("cat-error").classList.remove("show"); document.getElementById("cat-chips").classList.remove("error"); }
 
-  // details
-  if (!details) { showErr("inq-details","err-details"); valid = false; }
-  else          { clearErr("inq-details","err-details"); }
+  if (!details) { showErr("inq-details","err-details"); valid=false; }
+  else clearErr("inq-details","err-details");
 
-  // profile guard
-  if (!profile) { showToast("Complete your profile first", "error"); editProfile(); return; }
+  if (!profile) { showToast("Complete your profile first","error"); editProfile(); return; }
+  if (!valid) { showToast("Please fill in the required fields","error"); return; }
 
-  if (!valid) {
-    showToast("Please fill in the required fields", "error");
-    // scroll to first error
-    document.querySelector(".error, .show")?.scrollIntoView({ behavior:"smooth", block:"center" });
-    return;
-  }
-
-  // file — guard empty filename
   const fileInput = document.getElementById("inq-file");
-  const hasFile   = fileInput.files[0] && fileInput.files[0].name;
-
   const fd = new FormData();
-  fd.append("name",         profile.name    || "");
-  fd.append("mobile",       profile.mobile  || "");
-  fd.append("email",        profile.email   || userEmail);
-  fd.append("company_name", profile.company || "");
-  fd.append("profile_link", profile.link    || "");
+  fd.append("name",         profile.name    ||"");
+  fd.append("mobile",       profile.mobile  ||"");
+  fd.append("email",        profile.email   ||userEmail);
+  fd.append("company_name", profile.company ||"");
+  fd.append("profile_link", profile.link    ||"");
   fd.append("category",     category);
   fd.append("details",      details);
-  fd.append("budget",       document.getElementById("inq-budget").value || "");
-  fd.append("brand",        document.getElementById("inq-brand").value  || "");
-  fd.append("city",         document.getElementById("city-hidden").value || "");
+  fd.append("budget",       document.getElementById("inq-budget").value||"");
+  fd.append("brand",        document.getElementById("inq-brand").value ||"");
+  fd.append("city",         document.getElementById("city-hidden").value||"");
   fd.append("buyer_id",     buyerId);
-  if (hasFile) fd.append("file", fileInput.files[0]);
+  if (fileInput.files[0]) fd.append("file", fileInput.files[0]);
 
-  // disable button to prevent double-submit
   const btn = document.querySelector("#tab-create .btn-primary");
-  btn.disabled = true;
-  btn.innerText = "Submitting…";
-
+  btn.disabled=true; btn.innerText="Submitting…";
   try {
-    const res = await fetch("/inquiries", { method: "POST", body: fd });
-    if (res.ok) {
-      showToast("Inquiry posted! Sellers will respond soon.", "success");
-      clearInquiryForm();
-      await loadMy();
-      switchTab("my");
-    } else {
-      const err = await res.json().catch(() => ({}));
-      showToast(err.detail || "Failed to submit. Try again.", "error");
-    }
-  } catch {
-    showToast("Network error. Try again.", "error");
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Submit Inquiry";
-  }
+    const res = await fetch("/inquiries", { method:"POST", body:fd });
+    if (res.ok) { showToast("Inquiry posted! Sellers will respond soon.","success"); clearInquiryForm(); await loadMy(); switchTab("my"); }
+    else { const err=await res.json().catch(()=>({})); showToast(err.detail||"Failed to submit. Try again.","error"); }
+  } catch { showToast("Network error. Try again.","error"); }
+  finally { btn.disabled=false; btn.innerText="Submit Inquiry"; }
 }
 
 function clearInquiryForm() {
-  document.getElementById("inq-details").value = "";
-  document.getElementById("inq-budget").value  = "";
-  document.getElementById("inq-brand").value   = "";
-  document.getElementById("inq-file").value    = "";
-  document.getElementById("file-name-label").innerText = "";
-  document.getElementById("inq-category").value = "";
-  document.querySelectorAll(".cat-chip").forEach(c => c.classList.remove("selected"));
-  resetLocation();
+  ["inq-details","inq-budget","inq-brand"].forEach(id => document.getElementById(id).value="");
+  document.getElementById("inq-file").value="";
+  document.getElementById("file-name-label").innerText="";
+  document.getElementById("inq-category").value="";
+  document.querySelectorAll(".cat-chip").forEach(c=>c.classList.remove("selected"));
+  if (window.resetLocation) resetLocation();
 }
 
-/* ══════════════════════════════════════════════
-   ACTIONS
-══════════════════════════════════════════════ */
+/* ── ACTIONS ── */
 async function deleteInquiry(id) {
   if (!confirm("Delete this inquiry?")) return;
-  await fetch(`/inquiries/${id}?buyer_id=${buyerId}`, { method: "DELETE" });
-  showToast("Deleted", "info");
-  loadMy();
+  await fetch(`/inquiries/${id}?buyer_id=${buyerId}`,{method:"DELETE"});
+  showToast("Deleted","info"); loadMy();
 }
-
-async function acceptQuote(id, inquiryId) {
-  if (!confirm("Accept this quote? The inquiry will close and other quotes will be removed.")) return;
-  const res = await fetch(`/quotes/accept/${id}`, { method: "POST" });
-  const data = await res.json();
-  if (data.success) {
-    showToast("Quote accepted! Contact the seller to proceed.", "success");
-    await loadMy();
-    loadQuotes();
-  } else {
-    showToast("Failed to accept. Try again.", "error");
-  }
+async function acceptQuote(id,inquiryId) {
+  if (!confirm("Accept this quote? The inquiry will close.")) return;
+  const res=await fetch(`/quotes/accept/${id}`,{method:"POST"});
+  const data=await res.json();
+  if (data.success) { showToast("Quote accepted! Contact the seller to proceed.","success"); await loadMy(); loadQuotes(); }
+  else showToast("Failed to accept. Try again.","error");
 }
-
 async function rejectQuote(id) {
-  await fetch(`/quotes/reject/${id}`, { method: "POST" });
-  showToast("Quote rejected", "info");
-  loadQuotes();
+  await fetch(`/quotes/reject/${id}`,{method:"POST"});
+  showToast("Quote rejected","info"); loadQuotes();
 }
 
-function logout() { localStorage.clear(); window.location.href = "/login?role=buyer"; }
-
-function showToast(msg, type = "success") {
-  const t = document.getElementById("toast");
-  t.innerText = msg; t.className = `show ${type}`;
-  setTimeout(() => { t.className = ""; }, 3200);
+function showToast(msg,type="success") {
+  const t=document.getElementById("toast");
+  t.innerText=msg; t.className=`show ${type}`;
+  setTimeout(()=>{t.className="";},3200);
 }
 </script>
 
-<!-- ── Location Picker (shared) ─────────────────────── -->
 <script src="/frontend/location-picker.js"></script>
 <script>
-(function () {
+(function(){
   const picker = window.initLocationPicker({
-    namespace:         'loc',
-    stateTriggerId:    'state-trigger',
-    stateValueId:      'state-value',
-    stateDropId:       'state-drop',
-    stateSearchId:     'state-search',
-    stateListId:       'state-list',
-    stateOfflineBadge: 'state-offline-badge',
-    cityTriggerId:     'city-trigger',
-    cityValueId:       'city-value',
-    cityDropId:        'city-drop',
-    citySearchId:      'city-search',
-    cityListId:        'city-list',
-    cityOfflineBadge:  'city-offline-badge',
-    cityHiddenId:      'city-hidden',
-    wrapperSelector:   '#loc-wrapper',
+    namespace:'loc', stateTriggerId:'state-trigger', stateValueId:'state-value',
+    stateDropId:'state-drop', stateSearchId:'state-search', stateListId:'state-list',
+    stateOfflineBadge:'state-offline-badge', cityTriggerId:'city-trigger',
+    cityValueId:'city-value', cityDropId:'city-drop', citySearchId:'city-search',
+    cityListId:'city-list', cityOfflineBadge:'city-offline-badge',
+    cityHiddenId:'city-hidden', wrapperSelector:'#loc-wrapper',
   });
-
-  // expose reset for clearInquiryForm()
   window.resetLocation = () => picker.reset();
 })();
 </script>

@@ -410,3 +410,50 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.stats{grid-template-columns:1fr 1fr}.stats-slim{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.grid-2{grid-template-columns:1fr}.grid-2 textarea{grid-column:span 1}.stats{grid-template-columns:1fr 1fr}.filter-row{flex-direction:column;align-items:stretch}.inq-form-grid{grid-template-columns:1fr}.inq-form-grid .span-2{grid-column:1}.cat-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:400px){.stats,.stats-slim{grid-template-columns:1fr}}
+
+/* FORCE LIGHT LOCATION DROPDOWN */
+
+#state-drop,
+#city-drop {
+  background: #ffffff !important;
+  border: 1px solid #dde3f5 !important;
+  box-shadow: 0 12px 30px rgba(15,23,42,.10) !important;
+}
+
+/* THE REAL FIX — li not div */
+#state-list li,
+#city-list li {
+  background: #ffffff !important;
+  color: #374151 !important;
+}
+
+/* hover */
+#state-list li:hover,
+#city-list li:hover {
+  background: #eef4ff !important;
+  color: #2563eb !important;
+}
+
+/* selected */
+#state-list li.active,
+#city-list li.active {
+  background: rgba(37,99,235,.10) !important;
+  color: #2563eb !important;
+}
+
+/* search input */
+#state-search,
+#city-search {
+  background: #f8fafc !important;
+  color: #111827 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* FIX OVERLY LIGHT SEARCH HIGHLIGHT */
+#state-list mark,
+#city-list mark {
+  background: rgba(37,99,235,.12) !important;
+  color: #2563eb !important;
+  padding: 0 2px;
+  border-radius: 3px;
+}

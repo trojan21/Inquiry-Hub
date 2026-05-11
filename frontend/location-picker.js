@@ -253,7 +253,7 @@
       const idx = text.toLowerCase().indexOf(q.toLowerCase());
       if (idx === -1) return text;
       return text.slice(0, idx)
-        + `<mark style="background:rgba(123,47,255,0.35);color:#eef2ff;border-radius:2px;padding:0 1px;">`
+        + `<mark style="background:rgba(37,99,235,.12);color:#2563eb;border-radius:3px;padding:0 2px;">">`
         + text.slice(idx, idx + q.length)
         + `</mark>`
         + text.slice(idx + q.length);
